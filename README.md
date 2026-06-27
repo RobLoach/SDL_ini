@@ -39,20 +39,20 @@ int main(int argc, char *argv[])
     SDL_Init(0);
 
     // Creating and Saving
-    SDL_ini *ini = SDL_CreateIni();
-    SDL_SetIniString(ini,  NULL,    "app",        "MyGame");
-    SDL_SetIniInt(ini,     "Video", "width",      1920);
-    SDL_SetIniInt(ini,     "Video", "height",     1080);
-    SDL_SetIniBoolean(ini, "Video", "fullscreen", true);
-    SDL_SetIniFloat(ini,   "Audio", "volume",     0.85f);
-    SDL_SaveIni(ini, "settings.ini");
-    SDL_DestroyIni(ini);
+    SDL_ini *ini = INI_Create();
+    INI_SetString(ini,  NULL,    "title",        "My Game");
+    INI_SetInt(ini,     "Video", "width",      1920);
+    INI_SetInt(ini,     "Video", "height",     1080);
+    INI_SetBoolean(ini, "Video", "fullscreen", true);
+    INI_SetFloat(ini,   "Audio", "volume",     0.85f);
+    INI_Save(ini, "settings.ini");
+    INI_Destroy(ini);
 
     // Loading
-    SDL_ini *cfg = SDL_LoadIni("settings.ini");
-    int w = (int)SDL_GetIniInt(cfg, "Video", "width", 1280);
-    bool fs = SDL_GetIniBoolean(cfg, "Video", "fullscreen", false);
-    SDL_DestroyIni(cfg);
+    SDL_ini *cfg = INI_Load("settings.ini");
+    int w = (int)INI_GetInt(cfg, "Video", "width", 1280);
+    bool fs = INI_GetBoolean(cfg, "Video", "fullscreen", false);
+    INI_Destroy(cfg);
 
     SDL_Quit();
     return 0;
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 Produces `settings.ini`:
 
 ```ini
-app = MyGame
+app = My Game
 
 [Video]
 width = 1920
@@ -78,37 +78,37 @@ volume = 0.85
 ``` c
 // SDL_ini
 
-SDL_ini *SDL_CreateIni(void);
-SDL_ini *SDL_LoadIni_IO(SDL_IOStream *src, bool closeio);
-SDL_ini *SDL_LoadIni(const char *file);
-bool SDL_SaveIni_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio);
-bool SDL_SaveIni(const SDL_ini *ini, const char *file);
-void SDL_DestroyIni(SDL_ini *ini);
+SDL_ini *INI_Create(void);
+SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio);
+SDL_ini *INI_Load(const char *file);
+bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio);
+bool INI_Save(const SDL_ini *ini, const char *file);
+void INI_Destroy(SDL_ini *ini);
 
 // Get
 
-const char *SDL_GetIniString(const SDL_ini *ini, const char *section, const char *key, const char *default_value);
-Sint64 SDL_GetIniInt(const SDL_ini *ini, const char *section, const char *key, Sint64 default_value);
-float SDL_GetIniFloat(const SDL_ini *ini, const char *section, const char *key, float default_value);
-double SDL_GetIniDouble(const SDL_ini *ini, const char *section, const char *key, double default_value);
-bool SDL_GetIniBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value);
+const char *INI_GetString(const SDL_ini *ini, const char *section, const char *key, const char *default_value);
+Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint64 default_value);
+float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value);
+double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, double default_value);
+bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value);
 
 // Set
 
-bool SDL_SetIniString(SDL_ini *ini, const char *section, const char *key, const char *value);
-bool SDL_SetIniInt(SDL_ini *ini, const char *section, const char *key, Sint64 value);
-bool SDL_SetIniFloat(SDL_ini *ini, const char *section, const char *key, float value);
-bool SDL_SetIniDouble(SDL_ini *ini, const char *section, const char *key, double value);
-bool SDL_SetIniBoolean(SDL_ini *ini, const char *section, const char *key, bool value);
-bool SDL_DeleteIniKey(SDL_ini *ini, const char *section, const char *key);
-bool SDL_DeleteIniSection(SDL_ini *ini, const char *section);
+bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const char *value);
+bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value);
+bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value);
+bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double value);
+bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value);
+bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key);
+bool INI_RemoveSection(SDL_ini *ini, const char *section);
 
 // Enumerate
 
-typedef void (SDLCALL *SDL_EnumerateIniSectionsCallback)(const SDL_ini *ini, const char *section, void *userdata);
-typedef void (SDLCALL *SDL_EnumerateIniKeysCallback)(const SDL_ini *ini, const char *key,  const char *value, void *userdata);
-void SDL_EnumerateIniSections(const SDL_ini *ini, SDL_EnumerateIniSectionsCallback callback, void *userdata);
-void SDL_EnumerateIniKeys(const SDL_ini *ini, const char *section, SDL_EnumerateIniKeysCallback callback, void *userdata);
+typedef void (SDLCALL *INI_EnumerateSectionsCallback)(const SDL_ini *ini, const char *section, void *userdata);
+typedef void (SDLCALL *INI_EnumerateKeysCallback)(const SDL_ini *ini, const char *key,  const char *value, void *userdata);
+void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback callback, void *userdata);
+void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata);
 ```
 
 ## INI File Format
@@ -149,8 +149,8 @@ ctest --test-dir build
 ### Manual
 
 ```bash
-cc test_SDL_ini.c -o test_SDL_ini $(pkg-config --cflags --libs sdl3)
-./test_SDL_ini
+cc test/SDL_ini_test.c -o SDL_ini_test $(pkg-config --cflags --libs sdl3)
+./SDL_ini_test
 ```
 
 ## License
