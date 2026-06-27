@@ -13,7 +13,7 @@
  *
  * License:
  *   SDL_ini: Single-header C library for reading/writing INI files for SDL3
- *   Copyright (C) 2026 Rob Loach
+ *   Copyright (C) 2026 Rob Loach (https://robloach.net)
  *
  *   This software is provided 'as-is', without any express or implied
  *   warranty.  In no event will the authors be held liable for any damages
