@@ -393,7 +393,7 @@ static const char *INI__section_name(const char *section)
 /**
  * Trim leading and trailing whitespace in-place.
  *
- * @returns pointer into the original buffer (does NOT allocate).
+ * \returns pointer into the original buffer (does NOT allocate).
  *
  * \internal
  */
@@ -446,7 +446,7 @@ static void INI__unescape(char *s)
  *
  * '"hello world"' becomes 'hello world'; '"a\"b"' becomes 'a"b'.
  *
- * @returns pointer into the original buffer (does NOT allocate).
+ * \returns pointer into the original buffer (does NOT allocate).
  *
  * \internal
  */
@@ -467,7 +467,7 @@ static char *INI__unquote(char *s)
  *
  * Escapes \\, ", newline, carriage return and tab so the value round-trips  through INI__unquote().
  *
- * @returns a newly allocated string (free with SDL_free), or NULL on OOM.
+ * \returns a newly allocated string (free with SDL_free), or NULL on OOM.
  *
  * \internal
  */
@@ -528,7 +528,7 @@ static bool INI__needs_quoting(const char *s)
 /**
  * Find a section by name (case-insensitive).
  *
- * @returns NULL if not found.
+ * \returns NULL if not found.
  *
  * \internal
  */
@@ -561,7 +561,7 @@ static SDL_ini_item *INI__find_entry(const SDL_ini_section *sec, const char *key
 /**
  * Ensure capacity for one more section.
  *
- * @returns false on OOM.
+ * \returns false on OOM.
  *
  * \internal
  */
@@ -584,7 +584,7 @@ static bool INI__grow_sections(SDL_ini *ini)
 /**
  * Ensure capacity for one more item in a section.
  *
- * @returns false on OOM.
+ * \returns false on OOM.
  *
  * \internal
  */
@@ -607,7 +607,7 @@ static bool INI__grow_items(SDL_ini_section *sec)
 /**
  * Add or get a section by name.
  *
- * @returns NULL on OOM.
+ * \returns NULL on OOM.
  *
  * \internal
  */
