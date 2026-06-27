@@ -12,7 +12,7 @@
  *     #include "SDL_ini.h"
  *
  * License:
- *   SDL_ini: Single-header C library for reading/writing INI files for SDL3
+ *   SDL_ini: Single-header C library for reading/writing INI files with SDL3
  *   Copyright (C) 2026 Rob Loach (https://robloach.net)
  *
  *   This software is provided 'as-is', without any express or implied
