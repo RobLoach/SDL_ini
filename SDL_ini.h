@@ -41,6 +41,11 @@
 extern "C" {
 #endif
 
+/**
+ * An SDL_ini instance to handle the data for an INI file.
+ * \see INI_Create()
+ * \see INI_Destroy()
+ */
 typedef struct SDL_ini SDL_ini;
 
 /**
@@ -328,26 +333,47 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
 #ifndef SDL_INI_IMPLEMENTATION_ONCE
 #define SDL_INI_IMPLEMENTATION_ONCE
 
+/**
+ * The type of a given SDL_ini_item.
+ *
+ * \see SDL_ini_item
+ * \internal
+ */
 typedef enum SDL_ini_item_type {
-    SDL_INI_ITEM_ENTRY,     /* key = value */
-    SDL_INI_ITEM_COMMENT,   /* ; or # comment line */
-    SDL_INI_ITEM_BLANK      /* empty line */
+    SDL_INI_ITEM_ENTRY, /* The SDL_ini_item is something like "key = value". */
+    SDL_INI_ITEM_COMMENT, /* The SDL_ini_item is a comment, the the ; or # prefix. */
+    SDL_INI_ITEM_BLANK /* The SDL_ini_item is an empty line, because empty lines are preserved. */
 } SDL_ini_item_type;
 
+/**
+ * A single SDL_ini item, held within a section.
+ * \see SDL_ini_section
+ * \internal
+ */
 typedef struct SDL_ini_item {
     SDL_ini_item_type type;
-    char *key;       /* ENTRY only */
-    char *value;     /* ENTRY only */
-    char *comment;   /* COMMENT only: full text including ; or # prefix */
+    char *key; /* When the entry is a SDL_INI_ITEM_ENTRY, includes the key. */
+    char *value; /* When the entry is a SDL_INI_ITEM_ENTRY, provides the value. */
+    char *comment; /* When the entry is a SDL_INI_ITEM_COMMENT, this includes the full text, including ; or # prefix. */
 } SDL_ini_item;
 
+/**
+ * An SDL_ini section, holding any number of items.
+ * \see SDL_ini
+ * \internal
+ */
 typedef struct SDL_ini_section {
-    char *name;              /* empty string "" for the global section */
-    SDL_ini_item *items;
-    int item_count;
-    int item_capacity;
+    char *name; /** Empty string for the global section. */
+    SDL_ini_item *items; /** The array of items that are held within this section. */
+    int item_count; /** The number of items. */
+    int item_capacity; /** The maximum capacity of the items array. */
 } SDL_ini_section;
 
+/**
+ * An SDL_ini instance to handle the data for an INI file.
+ * \see INI_Create()
+ * \see INI_Destroy()
+ */
 struct SDL_ini {
     SDL_ini_section *sections;
     int section_count;
@@ -469,9 +495,12 @@ static char *INI__escape(const char *s)
 }
 
 /**
- * Returns true if the value needs to be wrapped in double quotes when
- * serialising: empty string, leading/trailing whitespace, or any character
- * that must be escaped (", backslash, newline, carriage return, tab).
+ * Checks if the value needs to be wrapped in double quotes when serializing.
+ *
+ * Empty string, leading/trailing whitespace, or any character must be
+ * escaped (", backslash, newline, carriage return, tab).
+ *
+ * \returns true if the value needs to be wrapped in double quotes.
  *
  * \internal
  */
@@ -603,7 +632,7 @@ static SDL_ini_section *INI__get_or_create_section(SDL_ini *ini, const char *nam
 }
 
 /**
- * Free all memory owned by a section (but not the section struct itself).
+ * Free all memory owned by a section (not the section struct itself).
  *
  * \internal
  */
@@ -665,12 +694,17 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
 
         // Blank Line
         if (*trimmed == '\0') {
-            SDL_ini_section *sec =
-                INI__get_or_create_section(ini, cur_section);
-            if (!sec) { INI_Destroy(ini); SDL_free(data); return NULL; }
+            SDL_ini_section *sec = INI__get_or_create_section(ini, cur_section);
+            if (!sec) {
+                INI_Destroy(ini);
+                SDL_free(data);
+                return NULL;
+            }
             cur_section = sec->name;
             if (!INI__grow_items(sec)) {
-                INI_Destroy(ini); SDL_free(data); return NULL;
+                INI_Destroy(ini);
+                SDL_free(data);
+                return NULL;
             }
             SDL_ini_item *item = &sec->items[sec->item_count];
             SDL_memset(item, 0, sizeof(*item));
@@ -682,12 +716,17 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
 
         // Comment
         if (*trimmed == '#' || *trimmed == ';') {
-            SDL_ini_section *sec =
-                INI__get_or_create_section(ini, cur_section);
-            if (!sec) { INI_Destroy(ini); SDL_free(data); return NULL; }
+            SDL_ini_section *sec = INI__get_or_create_section(ini, cur_section);
+            if (!sec) {
+                INI_Destroy(ini);
+                SDL_free(data);
+                return NULL;
+            }
             cur_section = sec->name;
             if (!INI__grow_items(sec)) {
-                INI_Destroy(ini); SDL_free(data); return NULL;
+                INI_Destroy(ini);
+                SDL_free(data);
+                return NULL;
             }
             SDL_ini_item *item = &sec->items[sec->item_count];
             SDL_memset(item, 0, sizeof(*item));
@@ -695,7 +734,9 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
             item->comment = SDL_strdup(trimmed);
             if (!item->comment) {
                 SDL_OutOfMemory();
-                INI_Destroy(ini); SDL_free(data); return NULL;
+                INI_Destroy(ini);
+                SDL_free(data);
+                return NULL;
             }
             sec->item_count++;
             line = eol ? eol + 1 : NULL;
@@ -710,8 +751,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
                 char *sec_name = INI__trim(trimmed + 1);
 
                 // Ensure section exists.
-                SDL_ini_section *sec =
-                    INI__get_or_create_section(ini, sec_name);
+                SDL_ini_section *sec = INI__get_or_create_section(ini, sec_name);
                 if (!sec) {
                     INI_Destroy(ini);
                     SDL_free(data);
@@ -731,8 +771,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
             char *value = INI__unquote(INI__trim(eq + 1));
 
             // Make sure the current section exists.
-            SDL_ini_section *sec =
-                INI__get_or_create_section(ini, cur_section);
+            SDL_ini_section *sec = INI__get_or_create_section(ini, cur_section);
             if (!sec) {
                 INI_Destroy(ini);
                 SDL_free(data);

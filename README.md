@@ -153,6 +153,12 @@ cc test/SDL_ini_test.c -o SDL_ini_test $(pkg-config --cflags --libs sdl3)
 ./SDL_ini_test
 ```
 
+### Documentation
+
+```bash
+doxygen .Doxyfile
+```
+
 ## License
 
 [zlib](LICENSE)

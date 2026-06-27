@@ -1,0 +1,45 @@
+# Doxyfile for SDL_ini
+
+PROJECT_NAME           = "SDL_ini"
+PROJECT_BRIEF          = "Single-header INI file library for SDL3"
+PROJECT_NUMBER         =
+OUTPUT_DIRECTORY       = docs
+INPUT                  = SDL_ini.h README.md
+USE_MDFILE_AS_MAINPAGE = README.md
+RECURSIVE              = NO
+
+# Build
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_SCOPE_NAMES       = YES
+SORT_MEMBER_DOCS       = NO
+INTERNAL_DOCS          = NO
+
+# Warnings
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = YES
+
+# Output
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_COLORSTYLE        = LIGHT
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+
+# Source
+SOURCE_BROWSER         = NO
+VERBATIM_HEADERS       = NO
+STRIP_CODE_COMMENTS    = YES
+
+# Preprocessor
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+PREDEFINED             = SDLCALL= \
+                         SDL_PRINTF_FORMAT_STRING=
+
+OPTIMIZE_OUTPUT_FOR_C  = YES
+TYPEDEF_HIDES_STRUCT   = YES
