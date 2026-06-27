@@ -75,7 +75,7 @@ volume = 0.85
 
 ## API Reference
 
-``` c
+```c
 // SDL_ini
 
 SDL_ini *INI_Create(void);

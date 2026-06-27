@@ -113,15 +113,6 @@ bool INI_Save(const SDL_ini *ini, const char *file);
 void INI_Destroy(SDL_ini *ini);
 
 /**
- * @}
- */
-
-/**
- * \defgroup getters Getters
- * @{
- */
-
-/**
  * Get a string value from the INI.
  *
  * \param ini the SDL_ini to query.
@@ -182,15 +173,6 @@ double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, d
  * \see INI_GetString()
  */
 bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value);
-
-/**
- * @}
- */
-
-/**
- * \defgroup Setters Setters
- * @{
- */
 
 /**
  * Set a string value in the INI.
@@ -275,15 +257,6 @@ bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key);
  * \see INI_RemoveKey()
  */
 bool INI_RemoveSection(SDL_ini *ini, const char *section);
-
-/**
- * @}
- */
-
-/**
- * \defgroup Enumeration Enumeration
- * @{
- */
 
 /**
  * Callback invoked for each section name during enumeration.
@@ -1186,4 +1159,24 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
 
 #endif /* SDL_INI_IMPLEMENTATION_ONCE */
 #endif /* SDL_INI_IMPLEMENTATION */
+
+#ifdef __DOXYGEN
+/**
+ * In exactly one C source file, define \c SDL_INI_IMPLEMENTATION before including `SDL_ini.h`.
+ *
+ * \code
+ * #define SDL_INI_IMPLEMENTATION
+ * #include "SDL_ini.h"
+ * \endcode
+ *
+ * In all other files, just include the header normally:
+ * \code
+ * #include "SDL_ini.h"
+ * \endcode
+ *
+ * \see INI_Create()
+ */
+#define SDL_INI_IMPLEMENTATION
+#endif /* __DOXYGEN */
+
 #endif /* SDL_INI_H_ */
