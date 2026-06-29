@@ -48,10 +48,25 @@ extern "C" {
  */
 typedef struct SDL_ini SDL_ini;
 
+#define SDL_INI_MAJOR_VERSION 1
+#define SDL_INI_MINOR_VERSION 0
+#define SDL_INI_MICRO_VERSION 0
+#define SDL_INI_VERSION \
+    SDL_VERSIONNUM(SDL_INI_MAJOR_VERSION, SDL_INI_MINOR_VERSION, SDL_INI_MICRO_VERSION)
+#define SDL_INI_VERSION_ATLEAST(X, Y, Z) \
+    (SDL_INI_VERSION >= SDL_VERSIONNUM(X, Y, Z))
+
 /**
  * \defgroup SDL_ini SDL_ini
  * @{
  */
+
+/**
+ * Get the version of SDL_ini that is linked against.
+ *
+ * \returns the version number as SDL_VERSIONNUM(major, minor, micro).
+ */
+int INI_GetVersion(void);
 
 /**
  * Create an empty INI object.
@@ -649,6 +664,11 @@ static void INI__free_section_contents(SDL_ini_section *sec)
     }
     SDL_free(sec->items);
     SDL_free(sec->name);
+}
+
+int INI_GetVersion(void)
+{
+    return SDL_INI_VERSION;
 }
 
 SDL_ini *INI_Create(void)

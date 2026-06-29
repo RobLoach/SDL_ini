@@ -704,6 +704,19 @@ static void test_has_section(void)
     INI_Destroy(ini);
 }
 
+static void test_version(void)
+{
+    SDL_Log("test_version");
+    int ver = INI_GetVersion();
+    TEST(ver > 0, "INI_GetVersion returns positive value");
+    TEST(ver == SDL_INI_VERSION, "INI_GetVersion matches SDL_INI_VERSION macro");
+    TEST(SDL_INI_MAJOR_VERSION == 1, "major version is 1");
+    TEST(SDL_INI_MINOR_VERSION == 0, "minor version is 0");
+    TEST(SDL_INI_MICRO_VERSION == 0, "micro version is 0");
+    TEST(SDL_INI_VERSION_ATLEAST(1, 0, 0), "version at least 1.0.0");
+    TEST(!SDL_INI_VERSION_ATLEAST(2, 0, 0), "version not at least 2.0.0");
+}
+
 int main(int argc, char *argv[])
 {
     (void)argc;
@@ -714,6 +727,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    test_version();
     test_create_destroy();
     test_set_get_string();
     test_set_get_int();
