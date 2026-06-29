@@ -1022,20 +1022,6 @@ Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint
     return val;
 }
 
-float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value)
-{
-    const char *str = INI_GetString(ini, section, key, NULL);
-    if (!str) {
-        return default_value;
-    }
-    char *endp = NULL;
-    float val = (float)SDL_strtod(str, &endp);
-    if (endp == str) {
-        return default_value;
-    }
-    return val;
-}
-
 double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, double default_value)
 {
     const char *str = INI_GetString(ini, section, key, NULL);
@@ -1048,6 +1034,11 @@ double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, d
         return default_value;
     }
     return val;
+}
+
+float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value)
+{
+    return (float)INI_GetDouble(ini, section, key, (double)default_value);
 }
 
 bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value)
@@ -1138,17 +1129,6 @@ bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value
     return ok;
 }
 
-bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value)
-{
-    char *str = NULL;
-    if (SDL_asprintf(&str, "%g", (double)value) < 0 || !str) {
-        return SDL_OutOfMemory();
-    }
-    bool ok = INI_SetString(ini, section, key, str);
-    SDL_free(str);
-    return ok;
-}
-
 bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double value)
 {
     char *str = NULL;
@@ -1158,6 +1138,11 @@ bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double va
     bool ok = INI_SetString(ini, section, key, str);
     SDL_free(str);
     return ok;
+}
+
+bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value)
+{
+    return INI_SetDouble(ini, section, key, (double)value);
 }
 
 bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value)
