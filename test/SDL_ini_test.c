@@ -675,6 +675,35 @@ static void test_has_key(void)
     INI_Destroy(ini);
 }
 
+static void test_has_section(void)
+{
+    SDL_Log("test_has_section");
+    SDL_ini *ini = INI_Create();
+
+    INI_SetString(ini, "Sec", "exists", "value");
+    INI_SetString(ini, NULL, "global", "gv");
+
+    TEST(INI_HasSection(ini, "Sec") == true, "existing section found");
+    TEST(INI_HasSection(ini, "NoSuch") == false, "missing section not found");
+    TEST(INI_HasSection(ini, "sec") == true, "section lookup is case-insensitive");
+    TEST(INI_HasSection(ini, NULL) == true, "global section found");
+    TEST(INI_HasSection(ini, "") == true, "global section found via empty string");
+    TEST(INI_HasSection(NULL, "Sec") == false, "NULL ini returns false");
+
+    INI_RemoveSection(ini, "Sec");
+    TEST(INI_HasSection(ini, "Sec") == false, "section gone after removal");
+
+    INI_Destroy(ini);
+
+    // A section that holds only comments/blank lines is not "present".
+    const char *src = "[Empty]\n; just a comment\n\n[Real]\nkey = value\n";
+    ini = INI_Load_IO(SDL_IOFromConstMem(src, SDL_strlen(src)), true);
+    TEST(INI_HasSection(ini, "Empty") == false, "comment-only section not present");
+    TEST(INI_HasSection(ini, "Real") == true, "section with a key is present");
+
+    INI_Destroy(ini);
+}
+
 int main(int argc, char *argv[])
 {
     (void)argc;
@@ -703,6 +732,7 @@ int main(int argc, char *argv[])
     test_comment_types();
     test_null_section();
     test_has_key();
+    test_has_section();
 
     SDL_Log("===========================================");
     SDL_Log("Results: %d passed, %d failed", g_pass, g_fail);

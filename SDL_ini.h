@@ -250,6 +250,19 @@ bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool val
 bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key);
 
 /**
+ * Check whether a section exists and contains at least one key.
+ *
+ * Sections that hold only comments or blank lines are not considered present.
+ *
+ * \param ini the SDL_ini to query.
+ * \param section the section name to check for.
+ * \returns true if the section has at least one key, false otherwise.
+ * \see INI_HasKey()
+ * \see INI_RemoveSection()
+ */
+bool INI_HasSection(const SDL_ini *ini, const char *section);
+
+/**
  * Delete a key from a section.
  *
  * \param ini the SDL_ini to modify.
@@ -519,6 +532,7 @@ static bool INI__needs_quoting(const char *s)
  */
 static SDL_ini_section *INI__find_section(const SDL_ini *ini, const char *name)
 {
+    name = INI__section_name(name);
     for (int i = 0; i < ini->section_count; ++i) {
         if (SDL_strcasecmp(ini->sections[i].name, name) == 0) {
             return &ini->sections[i];
@@ -598,6 +612,7 @@ static bool INI__grow_items(SDL_ini_section *sec)
  */
 static SDL_ini_section *INI__get_or_create_section(SDL_ini *ini, const char *name)
 {
+    name = INI__section_name(name);
     SDL_ini_section *sec = INI__find_section(ini, name);
     if (sec) {
         return sec;
@@ -921,8 +936,7 @@ const char *INI_GetString(const SDL_ini *ini, const char *section, const char *k
     if (!ini || !key) {
         return default_value;
     }
-    const char *sec_name = INI__section_name(section);
-    const SDL_ini_section *sec = INI__find_section(ini, sec_name);
+    const SDL_ini_section *sec = INI__find_section(ini, section);
     if (!sec) {
         return default_value;
     }
@@ -938,12 +952,30 @@ bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key)
     if (!ini || !key) {
         return false;
     }
-    const char *sec_name = INI__section_name(section);
-    const SDL_ini_section *sec = INI__find_section(ini, sec_name);
+    const SDL_ini_section *sec = INI__find_section(ini, section);
     if (!sec) {
         return false;
     }
     return INI__find_entry(sec, key) != NULL;
+}
+
+bool INI_HasSection(const SDL_ini *ini, const char *section)
+{
+    if (!ini) {
+        return false;
+    }
+    const SDL_ini_section *sec = INI__find_section(ini, section);
+    if (!sec) {
+        return false;
+    }
+    // A section counts as present only if it holds at least one key/value.
+    for (int i = 0; i < sec->item_count; ++i) {
+        // Comments or blank lines are not considered as filling a section.
+        if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
+            return true;
+        }
+    }
+    return false;
 }
 
 Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint64 default_value)
@@ -1118,8 +1150,7 @@ bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key)
     if (!ini || !key) {
         return false;
     }
-    const char *sec_name = INI__section_name(section);
-    SDL_ini_section *sec = INI__find_section(ini, sec_name);
+    SDL_ini_section *sec = INI__find_section(ini, section);
     if (!sec) {
         return false;
     }
@@ -1170,8 +1201,7 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
     if (!ini || !callback) {
         return;
     }
-    const char *sec_name = INI__section_name(section);
-    const SDL_ini_section *sec = INI__find_section(ini, sec_name);
+    const SDL_ini_section *sec = INI__find_section(ini, section);
     if (!sec) {
         return;
     }
