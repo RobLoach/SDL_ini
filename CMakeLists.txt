@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
-project(SDL_ini VERSION 1.0.0 LANGUAGES C)
+project(SDL_ini
+    VERSION 1.0.0
+    LANGUAGES C
+)
 
 # SDL_ini
 add_library(SDL_ini INTERFACE)
