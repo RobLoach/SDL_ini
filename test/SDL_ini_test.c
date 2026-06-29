@@ -61,6 +61,7 @@ static char g_values[32][128];
 
 static void SDLCALL count_keys(const SDL_ini* ini, const char *key, const char *value, void *userdata)
 {
+    (void)ini;
     (void)userdata;
     if (g_key_count < 32) {
         SDL_strlcpy(g_keys[g_key_count], key, sizeof(g_keys[0]));

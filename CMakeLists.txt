@@ -26,6 +26,9 @@ if(SDL_INI_BUILD_TESTS)
         C_STANDARD_REQUIRED ON
         C_EXTENSIONS OFF
     )
+    target_compile_options(SDL_ini_test PRIVATE
+        $<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Werror>
+    )
     enable_testing()
     add_test(NAME SDL_ini_tests COMMAND SDL_ini_test)
 endif()
