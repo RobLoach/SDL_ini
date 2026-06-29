@@ -1,8 +1,8 @@
 /*
  * SDL_ini.h - Single-header INI file library for SDL3
  *
- * Version:
- *   1.0.0
+ * Website:
+ *   https://github.com/robloach/SDL_ini
  *
  * Usage:
  *   In exactly one C source file, define the implementation before including:
