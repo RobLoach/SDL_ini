@@ -650,6 +650,31 @@ static void test_null_section(void)
     INI_Destroy(ini);
 }
 
+static void test_has_key(void)
+{
+    SDL_Log("test_has_key");
+    SDL_ini *ini = INI_Create();
+
+    INI_SetString(ini, "Sec", "exists", "value");
+    INI_SetString(ini, NULL, "global", "gv");
+
+    TEST(INI_HasKey(ini, "Sec", "exists") == true, "existing key found");
+    TEST(INI_HasKey(ini, "Sec", "missing") == false, "missing key not found");
+    TEST(INI_HasKey(ini, "NoSuch", "exists") == false, "missing section not found");
+    TEST(INI_HasKey(ini, NULL, "global") == true, "global section key found");
+    TEST(INI_HasKey(ini, NULL, "nope") == false, "global section missing key");
+    TEST(INI_HasKey(NULL, "Sec", "exists") == false, "NULL ini returns false");
+    TEST(INI_HasKey(ini, "Sec", NULL) == false, "NULL key returns false");
+
+    INI_SetString(ini, "Sec", "exists", "updated");
+    TEST(INI_HasKey(ini, "Sec", "exists") == true, "key still found after update");
+
+    INI_RemoveKey(ini, "Sec", "exists");
+    TEST(INI_HasKey(ini, "Sec", "exists") == false, "key gone after removal");
+
+    INI_Destroy(ini);
+}
+
 int main(int argc, char *argv[])
 {
     (void)argc;
@@ -677,6 +702,7 @@ int main(int argc, char *argv[])
     test_comment_preservation();
     test_comment_types();
     test_null_section();
+    test_has_key();
 
     SDL_Log("===========================================");
     SDL_Log("Results: %d passed, %d failed", g_pass, g_fail);
