@@ -653,9 +653,9 @@ static void test_null_section(void)
 static void test_version(void)
 {
     SDL_Log("test_version");
-    int ver = INI_Version();
-    TEST(ver > 0, "INI_Version returns positive value");
-    TEST(ver == SDL_INI_VERSION, "INI_Version matches SDL_INI_VERSION macro");
+    int ver = INI_GetVersion();
+    TEST(ver > 0, "INI_GetVersion returns positive value");
+    TEST(ver == SDL_INI_VERSION, "INI_GetVersion matches SDL_INI_VERSION macro");
     TEST(SDL_INI_MAJOR_VERSION == 1, "major version is 1");
     TEST(SDL_INI_MINOR_VERSION == 0, "minor version is 0");
     TEST(SDL_INI_MICRO_VERSION == 0, "micro version is 0");

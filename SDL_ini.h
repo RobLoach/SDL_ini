@@ -66,7 +66,7 @@ typedef struct SDL_ini SDL_ini;
  *
  * \returns the version number as SDL_VERSIONNUM(major, minor, micro).
  */
-int INI_Version(void);
+int INI_GetVersion(void);
 
 /**
  * Create an empty INI object.
@@ -639,7 +639,7 @@ static void INI__free_section_contents(SDL_ini_section *sec)
     SDL_free(sec->name);
 }
 
-int INI_Version(void)
+int INI_GetVersion(void)
 {
     return SDL_INI_VERSION;
 }
