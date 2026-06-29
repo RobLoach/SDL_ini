@@ -1,90 +1,87 @@
 /*
- * test_SDL_ini.c - Comprehensive tests for SDL_ini.h
+ * SDL_ini_test.c - Comprehensive tests for SDL_ini.h
  *
- * Build:
- *   cc test_SDL_ini.c -o test_SDL_ini $(pkg-config --cflags --libs sdl3)
+ * Built on the SDL_test harness. Build via the project's CMake, or:
+ *   cc SDL_ini_test.c -o SDL_ini_test $(pkg-config --cflags --libs sdl3) -lSDL3_test
  */
-
 #define SDL_INI_IMPLEMENTATION
 #include "SDL_ini.h"
 
-#include <stdio.h>
+#include <SDL3/SDL_test.h>
 
-static int g_pass = 0;
-static int g_fail = 0;
+/* Check a boolean condition. */
+#define TEST(cond, msg) SDLTest_AssertCheck((cond) ? 1 : 0, "%s", (msg))
 
-/**
- * Tests against the given condition, and outputs the msg on failure.
- *
- * @param cond The condition to check against.
- * @param msg The message to dipslay if it fails.
- */
-#define TEST(cond, msg)                                                 \
-    do {                                                                \
-        if (cond) {                                                     \
-            g_pass++;                                                   \
-        } else {                                                        \
-            g_fail++;                                                   \
-            SDL_Log("FAIL [%s:%d]: %s", __FILE__, __LINE__, msg);       \
-        }                                                               \
-    } while (0)
-
+/* Check string equality, reporting the actual and expected values on failure. */
 #define TEST_STR(a, b, msg)                                             \
     do {                                                                \
-        if ((a) && (b) && SDL_strcmp((a), (b)) == 0) {                   \
-            g_pass++;                                                   \
-        } else {                                                        \
-            g_fail++;                                                   \
-            SDL_Log("FAIL [%s:%d]: %s (got \"%s\", expected \"%s\")",   \
-                    __FILE__, __LINE__, msg,                             \
-                    (a) ? (a) : "(null)", (b) ? (b) : "(null)");        \
-        }                                                               \
+        const char *sa_ = (a);                                          \
+        const char *sb_ = (b);                                          \
+        SDLTest_AssertCheck(sa_ && sb_ && SDL_strcmp(sa_, sb_) == 0,     \
+                            "%s (got \"%s\", expected \"%s\")", (msg),   \
+                            sa_ ? sa_ : "(null)", sb_ ? sb_ : "(null)"); \
     } while (0)
 
-static int g_section_count;
-static char g_section_names[32][64];
+/* Collects names/values seen during enumeration, passed via the callback's
+ * userdata. Sections use only the names; keys use names and values. */
+typedef struct {
+    int count;
+    char names[32][64];
+    char values[32][128];
+} Collector;
 
-static void SDLCALL count_sections(const SDL_ini* ini, const char *section, void *userdata)
+static void SDLCALL collect_section(const SDL_ini *ini, const char *section, void *userdata)
 {
+    Collector *c = (Collector *)userdata;
     (void)ini;
-    (void)userdata;
-    if (g_section_count < 32) {
-        SDL_strlcpy(g_section_names[g_section_count], section,
-                    sizeof(g_section_names[0]));
+    if (c->count < 32) {
+        SDL_strlcpy(c->names[c->count], section, sizeof(c->names[0]));
     }
-    g_section_count++;
+    c->count++;
 }
 
-static int g_key_count;
-static char g_keys[32][64];
-static char g_values[32][128];
-
-static void SDLCALL count_keys(const SDL_ini* ini, const char *key, const char *value, void *userdata)
+static void SDLCALL collect_key(const SDL_ini *ini, const char *key, const char *value, void *userdata)
 {
+    Collector *c = (Collector *)userdata;
     (void)ini;
-    (void)userdata;
-    if (g_key_count < 32) {
-        SDL_strlcpy(g_keys[g_key_count], key, sizeof(g_keys[0]));
-        SDL_strlcpy(g_values[g_key_count], value, sizeof(g_values[0]));
+    if (c->count < 32) {
+        SDL_strlcpy(c->names[c->count], key, sizeof(c->names[0]));
+        SDL_strlcpy(c->values[c->count], value, sizeof(c->values[0]));
     }
-    g_key_count++;
+    c->count++;
 }
 
-static void test_create_destroy(void)
+/* Save an INI to a freshly allocated, NUL-terminated string (caller frees with
+ * SDL_free). Optionally reports the byte count via *size. */
+static char *save_string(SDL_ini *ini, size_t *size)
 {
-    SDL_Log("test_create_destroy");
+    SDL_IOStream *out = SDL_IOFromDynamicMem();
+    if (!out || !INI_Save_IO(ini, out, false)) {
+        if (out) {
+            SDL_CloseIO(out);
+        }
+        return NULL;
+    }
+    SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
+    return (char *)SDL_LoadFile_IO(out, size, true);
+}
+
+static int SDLCALL test_create_destroy(void *arg)
+{
+    (void)arg;
     SDL_ini *ini = INI_Create();
     TEST(ini != NULL, "INI_Create returns non-NULL");
     INI_Destroy(ini);
 
-    // Destroying NULL should be a no-op. */
+    // Destroying NULL should be a no-op.
     INI_Destroy(NULL);
     TEST(true, "INI_Destroy(NULL) does not crash");
+    return TEST_COMPLETED;
 }
 
-static void test_set_get_string(void)
+static int SDLCALL test_set_get_string(void *arg)
 {
-    SDL_Log("test_set_get_string");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     // Global section.
@@ -109,11 +106,12 @@ static void test_set_get_string(void)
     TEST_STR(INI_GetString(ini, "Video", "width", "0"), "2560", "overwrite existing key");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_set_get_int(void)
+static int SDLCALL test_set_get_int(void *arg)
 {
-    SDL_Log("test_set_get_int");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     INI_SetInt(ini, "Numbers", "decimal", 42);
@@ -137,11 +135,12 @@ static void test_set_get_int(void)
     TEST(INI_GetInt(ini, "Numbers", "missing", -1) == -1, "missing key returns default");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_set_get_float(void)
+static int SDLCALL test_set_get_float(void *arg)
 {
-    SDL_Log("test_set_get_float");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     INI_SetFloat(ini, "Physics", "gravity", 9.81f);
@@ -157,11 +156,12 @@ static void test_set_get_float(void)
     TEST(INI_GetFloat(ini, "Physics", "bad", -1.0f) == -1.0f, "non-numeric float returns default");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_set_get_double(void)
+static int SDLCALL test_set_get_double(void *arg)
 {
-    SDL_Log("test_set_get_double");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     // Double-precision round-trip.
@@ -181,11 +181,12 @@ static void test_set_get_double(void)
     TEST(INI_GetDouble(ini, "Physics", "missing", 42.5) == 42.5, "missing key returns default");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_set_get_boolean(void)
+static int SDLCALL test_set_get_boolean(void *arg)
 {
-    SDL_Log("test_set_get_boolean");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     INI_SetBoolean(ini, "Flags", "fullscreen", true);
@@ -219,11 +220,12 @@ static void test_set_get_boolean(void)
     TEST(INI_GetBoolean(ini, "Flags", "g", false) == false, "unrecognised -> default (false)");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_deletion(void)
+static int SDLCALL test_deletion(void *arg)
 {
-    SDL_Log("test_deletion");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     INI_SetString(ini, "Sec", "a", "1");
@@ -253,12 +255,14 @@ static void test_deletion(void)
     TEST(INI_RemoveSection(ini, "NoSuch") == false, "delete non-existent section returns false");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_enumeration(void)
+static int SDLCALL test_enumeration(void *arg)
 {
-    SDL_Log("test_enumeration");
+    (void)arg;
     SDL_ini *ini = INI_Create();
+    Collector got;
 
     INI_SetString(ini, NULL, "global_key", "gv");
     INI_SetString(ini, "Alpha", "a1", "v1");
@@ -266,38 +270,39 @@ static void test_enumeration(void)
     INI_SetString(ini, "Beta",  "b1", "v3");
 
     // Enumerate sections.
-    g_section_count = 0;
-    INI_EnumerateSections(ini, count_sections, NULL);
-    TEST(g_section_count == 3, "3 sections enumerated");
+    got.count = 0;
+    INI_EnumerateSections(ini, collect_section, &got);
+    TEST(got.count == 3, "3 sections enumerated");
 
     // Enumerate keys in Alpha.
-    g_key_count = 0;
-    INI_EnumerateKeys(ini, "Alpha", count_keys, NULL);
-    TEST(g_key_count == 2, "2 keys in Alpha");
-    TEST_STR(g_keys[0], "a1", "first key is a1");
-    TEST_STR(g_values[0], "v1", "first value is v1");
+    got.count = 0;
+    INI_EnumerateKeys(ini, "Alpha", collect_key, &got);
+    TEST(got.count == 2, "2 keys in Alpha");
+    TEST_STR(got.names[0], "a1", "first key is a1");
+    TEST_STR(got.values[0], "v1", "first value is v1");
 
     // Enumerate keys in global section.
-    g_key_count = 0;
-    INI_EnumerateKeys(ini, NULL, count_keys, NULL);
-    TEST(g_key_count == 1, "1 key in global section");
-    TEST_STR(g_keys[0], "global_key", "global key name");
+    got.count = 0;
+    INI_EnumerateKeys(ini, NULL, collect_key, &got);
+    TEST(got.count == 1, "1 key in global section");
+    TEST_STR(got.names[0], "global_key", "global key name");
 
     // Enumerate keys in non-existent section.
-    g_key_count = 0;
-    INI_EnumerateKeys(ini, "NoSuch", count_keys, NULL);
-    TEST(g_key_count == 0, "0 keys in non-existent section");
+    got.count = 0;
+    INI_EnumerateKeys(ini, "NoSuch", collect_key, &got);
+    TEST(got.count == 0, "0 keys in non-existent section");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_save_and_load(void)
+static int SDLCALL test_save_and_load(void *arg)
 {
-    SDL_Log("test_save_and_load");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     // Build some data.
-    INI_SetString(ini,  NULL,      "app", "test_SDL_ini");
+    INI_SetString(ini,  NULL,      "app", "SDL_ini_test");
     INI_SetString(ini,  "Video",   "width", "1920");
     INI_SetString(ini,  "Video",   "height", "1080");
     INI_SetBoolean(ini, "Video",   "fullscreen", true);
@@ -314,7 +319,7 @@ static void test_save_and_load(void)
     TEST(loaded != NULL, "load from file");
 
     if (loaded) {
-        TEST_STR(INI_GetString(loaded, NULL, "app", "?"), "test_SDL_ini", "global key round-trip");
+        TEST_STR(INI_GetString(loaded, NULL, "app", "?"), "SDL_ini_test", "global key round-trip");
         TEST_STR(INI_GetString(loaded, "Video", "width", "0"), "1920", "video width round-trip");
         TEST_STR(INI_GetString(loaded, "Video", "height", "0"), "1080", "video height round-trip");
         TEST(INI_GetBoolean(loaded, "Video", "fullscreen", false) == true, "fullscreen round-trip");
@@ -328,14 +333,14 @@ static void test_save_and_load(void)
 
     // Clean up test file.
     SDL_RemovePath(path);
+    return TEST_COMPLETED;
 }
 
-static void test_parse_edge_cases(void)
+static int SDLCALL test_parse_edge_cases(void *arg)
 {
-    SDL_Log("test_parse_edge_cases");
-
+    (void)arg;
     // Build an INI string with tricky formatting.
-    const char *ini_text =
+    SDL_ini *ini = INI_LoadString(
         "  ; This is a comment  \n"
         "# Another comment\n"
         "   \n"
@@ -347,44 +352,38 @@ static void test_parse_edge_cases(void)
         "noequals_line\n"
         "[Empty]\n"
         "[HasKeys]\n"
-        "x = 1\n";
-
-    SDL_IOStream *mem = SDL_IOFromConstMem(ini_text, SDL_strlen(ini_text));
-    TEST(mem != NULL, "create IOStream from const mem");
-
-    SDL_ini *ini = INI_Load_IO(mem, true);
+        "x = 1\n");
     TEST(ini != NULL, "parse edge-case INI");
 
     if (ini) {
+        Collector got;
+
         // Global key.
-        TEST_STR(INI_GetString(ini, NULL, "global", "?"),
-                 "value", "global key parsed");
+        TEST_STR(INI_GetString(ini, NULL, "global", "?"), "value", "global key parsed");
 
         // Spaced section and trimmed values.
         TEST_STR(INI_GetString(ini, "Spaced Section", "key1", "?"), "value with spaces", "trimmed key1");
-        TEST_STR(INI_GetString(ini, "Spaced Section", "key2", "?"),
-                 "nospace", "key2 no-space");
+        TEST_STR(INI_GetString(ini, "Spaced Section", "key2", "?"), "nospace", "key2 no-space");
 
         // Lines without '=' should be ignored.
-        TEST_STR(INI_GetString(ini, "Spaced Section", "noequals_line", "missing"),
-                 "missing", "no-equals line ignored");
+        TEST_STR(INI_GetString(ini, "Spaced Section", "noequals_line", "missing"), "missing", "no-equals line ignored");
 
         // Empty section exists but has no keys.
-        g_key_count = 0;
-        INI_EnumerateKeys(ini, "Empty", count_keys, NULL);
-        TEST(g_key_count == 0, "empty section has 0 keys");
+        got.count = 0;
+        INI_EnumerateKeys(ini, "Empty", collect_key, &got);
+        TEST(got.count == 0, "empty section has 0 keys");
 
         // HasKeys section.
-        TEST_STR(INI_GetString(ini, "HasKeys", "x", "?"),
-                 "1", "HasKeys.x parsed");
+        TEST_STR(INI_GetString(ini, "HasKeys", "x", "?"), "1", "HasKeys.x parsed");
 
         INI_Destroy(ini);
     }
+    return TEST_COMPLETED;
 }
 
-static void test_io_stream(void)
+static int SDLCALL test_io_stream(void *arg)
 {
-    SDL_Log("test_io_stream");
+    (void)arg;
     SDL_ini *ini = INI_Create();
     INI_SetString(ini, "Test", "key", "value");
 
@@ -403,24 +402,21 @@ static void test_io_stream(void)
     }
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_quoted_values(void)
+static int SDLCALL test_quoted_values(void *arg)
 {
-    SDL_Log("test_quoted_values");
-
+    (void)arg;
     // Parse: double-quoted values should have quotes stripped.
-    const char *ini_text =
+    SDL_ini *ini = INI_LoadString(
         "[Quoted]\n"
         "plain = hello\n"
         "quoted = \"world\"\n"
         "spaced = \"  leading and trailing  \"\n"
         "empty = \"\"\n"
         "single_quote = \"only one side\n"
-        "inner_quotes = \"she said \"hi\"\"\n";
-
-    SDL_IOStream *mem = SDL_IOFromConstMem(ini_text, SDL_strlen(ini_text));
-    SDL_ini *ini = INI_Load_IO(mem, true);
+        "inner_quotes = \"she said \"hi\"\"\n");
     TEST(ini != NULL, "parse quoted INI");
 
     if (ini) {
@@ -433,7 +429,7 @@ static void test_quoted_values(void)
         // Quoted value preserves inner whitespace.
         TEST_STR(INI_GetString(ini, "Quoted", "spaced", "?"), "  leading and trailing  ", "quoted preserves whitespace");
 
-        // Empty quoted value. */
+        // Empty quoted value.
         TEST_STR(INI_GetString(ini, "Quoted", "empty", "?"), "", "empty quoted value");
 
         INI_Destroy(ini);
@@ -466,12 +462,12 @@ static void test_quoted_values(void)
         INI_Destroy(loaded);
     }
     SDL_RemovePath(path);
+    return TEST_COMPLETED;
 }
 
-static void test_newline_values(void)
+static int SDLCALL test_newline_values(void *arg)
 {
-    SDL_Log("test_newline_values");
-
+    (void)arg;
     // Values containing newlines/tabs must be escaped so they don't break the
     // file structure on reload.
     SDL_ini *ini = INI_Create();
@@ -486,51 +482,52 @@ static void test_newline_values(void)
     SDL_ini *loaded = INI_Load(path);
     TEST(loaded != NULL, "load newline values");
     if (loaded) {
+        Collector got;
+
         TEST_STR(INI_GetString(loaded, "Multi", "line", "?"), "first\nsecond", "newline value round-trip");
         TEST_STR(INI_GetString(loaded, "Multi", "tabbed", "?"), "a\tb\tc", "tab value round-trip");
         TEST_STR(INI_GetString(loaded, "Multi", "after", "?"), "sentinel", "value after newline value intact");
 
         // The embedded newline must not have created extra keys.
-        g_key_count = 0;
-        INI_EnumerateKeys(loaded, "Multi", count_keys, NULL);
-        TEST(g_key_count == 3, "newline did not split into extra keys");
+        got.count = 0;
+        INI_EnumerateKeys(loaded, "Multi", collect_key, &got);
+        TEST(got.count == 3, "newline did not split into extra keys");
 
         INI_Destroy(loaded);
     }
     SDL_RemovePath(path);
+    return TEST_COMPLETED;
 }
 
-static void test_duplicate_keys(void)
+static int SDLCALL test_duplicate_keys(void *arg)
 {
-    SDL_Log("test_duplicate_keys");
-
+    (void)arg;
     // A key repeated within one section collapses to a single entry with the
     // last value.
-    const char *ini_text =
+    SDL_ini *ini = INI_LoadString(
         "[Sec]\n"
         "key = first\n"
         "key = second\n"
-        "key = third\n";
-
-    SDL_IOStream *mem = SDL_IOFromConstMem(ini_text, SDL_strlen(ini_text));
-    SDL_ini *ini = INI_Load_IO(mem, true);
+        "key = third\n");
     TEST(ini != NULL, "load duplicate keys");
 
     if (ini) {
+        Collector got;
+
         TEST_STR(INI_GetString(ini, "Sec", "key", "?"), "third", "duplicate key takes last value");
 
-        g_key_count = 0;
-        INI_EnumerateKeys(ini, "Sec", count_keys, NULL);
-        TEST(g_key_count == 1, "duplicate keys collapse to one entry");
+        got.count = 0;
+        INI_EnumerateKeys(ini, "Sec", collect_key, &got);
+        TEST(got.count == 1, "duplicate keys collapse to one entry");
 
         INI_Destroy(ini);
     }
+    return TEST_COMPLETED;
 }
 
-static void test_comment_preservation(void)
+static int SDLCALL test_comment_preservation(void *arg)
 {
-    SDL_Log("test_comment_preservation");
-
+    (void)arg;
     // Build an INI with comments and blank lines.
     const char *ini_text =
         "; Global header comment\n"
@@ -548,9 +545,7 @@ static void test_comment_preservation(void)
         "; Volume from 0 to 100\n"
         "volume = 85\n";
 
-    // Load from memory.
-    SDL_IOStream *mem = SDL_IOFromConstMem(ini_text, SDL_strlen(ini_text));
-    SDL_ini *ini = INI_Load_IO(mem, true);
+    SDL_ini *ini = INI_LoadString(ini_text);
     TEST(ini != NULL, "load INI with comments");
 
     if (ini) {
@@ -560,19 +555,13 @@ static void test_comment_preservation(void)
         TEST(INI_GetBoolean(ini, "Video", "fullscreen", false) == true, "fullscreen with comments");
         TEST(INI_GetInt(ini, "Audio", "volume", 0) == 85, "volume with comments");
 
-        // Save to dynamic mem and compare output.
-        SDL_IOStream *out = SDL_IOFromDynamicMem();
-        TEST(INI_Save_IO(ini, out, false) == true, "save INI with comments");
-
-        // Read back the written bytes.
-        Sint64 written = SDL_TellIO(out);
-        SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
+        // Save to a string and compare output.
         size_t outsize = 0;
-        char *output = (char *)SDL_LoadFile_IO(out, &outsize, true);
+        char *output = save_string(ini, &outsize);
         TEST(output != NULL, "read back saved INI");
 
         if (output) {
-            TEST((Sint64)outsize == written, "output size matches");
+            TEST(outsize == SDL_strlen(ini_text), "output size matches");
             TEST(SDL_strcmp(output, ini_text) == 0, "round-trip preserves comments and blanks");
             if (SDL_strcmp(output, ini_text) != 0) {
                 SDL_Log("  EXPECTED:\n%s", ini_text);
@@ -583,12 +572,12 @@ static void test_comment_preservation(void)
 
         INI_Destroy(ini);
     }
+    return TEST_COMPLETED;
 }
 
-static void test_comment_types(void)
+static int SDLCALL test_comment_types(void *arg)
 {
-    SDL_Log("test_comment_types");
-
+    (void)arg;
     // Both ; and # comments are preserved.
     const char *ini_text =
         "; semicolon comment\n"
@@ -597,29 +586,24 @@ static void test_comment_types(void)
         "[Sec]\n"
         "key = val\n";
 
-    SDL_IOStream *mem = SDL_IOFromConstMem(ini_text, SDL_strlen(ini_text));
-    SDL_ini *ini = INI_Load_IO(mem, true);
+    SDL_ini *ini = INI_LoadString(ini_text);
     TEST(ini != NULL, "parse both comment types");
 
     if (ini) {
         // Save and verify both comment styles are preserved.
-        SDL_IOStream *out = SDL_IOFromDynamicMem();
-        INI_Save_IO(ini, out, false);
-        SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
-        size_t outsize = 0;
-        char *output = (char *)SDL_LoadFile_IO(out, &outsize, true);
-
+        char *output = save_string(ini, NULL);
         if (output) {
             TEST(SDL_strcmp(output, ini_text) == 0, "both comment styles round-trip");
             SDL_free(output);
         }
         INI_Destroy(ini);
     }
+    return TEST_COMPLETED;
 }
 
-static void test_null_section(void)
+static int SDLCALL test_null_section(void *arg)
 {
-    SDL_Log("test_null_section");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     // NULL section stores keys at the top level.
@@ -631,12 +615,7 @@ static void test_null_section(void)
     TEST_STR(INI_GetString(ini, "", "key1", "?"), "val1", "empty-string section get (same as NULL)");
 
     // Save and verify global keys appear at top without a header.
-    SDL_IOStream *out = SDL_IOFromDynamicMem();
-    INI_Save_IO(ini, out, false);
-    SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
-    size_t outsize = 0;
-    char *output = (char *)SDL_LoadFile_IO(out, &outsize, true);
-
+    char *output = save_string(ini, NULL);
     if (output) {
         // Output should start with keys, not a section header.
         TEST(SDL_strncmp(output, "key1 = val1\n", 12) == 0, "global keys at top of file");
@@ -649,11 +628,12 @@ static void test_null_section(void)
     TEST_STR(INI_GetString(ini, NULL, "key1", "gone"), "gone", "deleted NULL-section key returns default");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_has_key(void)
+static int SDLCALL test_has_key(void *arg)
 {
-    SDL_Log("test_has_key");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     INI_SetString(ini, "Sec", "exists", "value");
@@ -674,11 +654,12 @@ static void test_has_key(void)
     TEST(INI_HasKey(ini, "Sec", "exists") == false, "key gone after removal");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_has_section(void)
+static int SDLCALL test_has_section(void *arg)
 {
-    SDL_Log("test_has_section");
+    (void)arg;
     SDL_ini *ini = INI_Create();
 
     INI_SetString(ini, "Sec", "exists", "value");
@@ -697,17 +678,17 @@ static void test_has_section(void)
     INI_Destroy(ini);
 
     // A section that holds only comments/blank lines is not "present".
-    const char *src = "[Empty]\n; just a comment\n\n[Real]\nkey = value\n";
-    ini = INI_Load_IO(SDL_IOFromConstMem(src, SDL_strlen(src)), true);
+    ini = INI_LoadString("[Empty]\n; just a comment\n\n[Real]\nkey = value\n");
     TEST(INI_HasSection(ini, "Empty") == false, "comment-only section not present");
     TEST(INI_HasSection(ini, "Real") == true, "section with a key is present");
 
     INI_Destroy(ini);
+    return TEST_COMPLETED;
 }
 
-static void test_version(void)
+static int SDLCALL test_version(void *arg)
 {
-    SDL_Log("test_version");
+    (void)arg;
     int ver = INI_GetVersion();
     TEST(ver > 0, "INI_GetVersion returns positive value");
     TEST(ver == SDL_INI_VERSION, "INI_GetVersion matches SDL_INI_VERSION macro");
@@ -716,43 +697,67 @@ static void test_version(void)
     TEST(SDL_INI_MICRO_VERSION == 0, "micro version is 0");
     TEST(SDL_INI_VERSION_ATLEAST(1, 0, 0), "version at least 1.0.0");
     TEST(!SDL_INI_VERSION_ATLEAST(2, 0, 0), "version not at least 2.0.0");
+    return TEST_COMPLETED;
 }
+
+#define CASE(fn, desc) &(const SDLTest_TestCaseReference){ fn, #fn, desc, TEST_ENABLED }
+
+static const SDLTest_TestCaseReference *iniTestCases[] = {
+    CASE(test_version,              "Version macros and INI_GetVersion"),
+    CASE(test_create_destroy,       "Create and destroy lifecycle"),
+    CASE(test_set_get_string,       "Set/get strings, sections, defaults"),
+    CASE(test_set_get_int,          "Set/get and parse integers"),
+    CASE(test_set_get_float,        "Set/get and parse floats"),
+    CASE(test_set_get_double,       "Set/get and parse doubles"),
+    CASE(test_set_get_boolean,      "Set/get and parse booleans"),
+    CASE(test_deletion,             "Remove keys and sections"),
+    CASE(test_enumeration,          "Enumerate sections and keys"),
+    CASE(test_save_and_load,        "Save to and load from a file"),
+    CASE(test_parse_edge_cases,     "Parse whitespace/comment edge cases"),
+    CASE(test_io_stream,            "Save/load through an IOStream"),
+    CASE(test_quoted_values,        "Quoted value parsing and round-trip"),
+    CASE(test_newline_values,       "Escaped newline/tab values"),
+    CASE(test_duplicate_keys,       "Duplicate keys collapse to last"),
+    CASE(test_comment_preservation, "Comments and blanks round-trip"),
+    CASE(test_comment_types,        "Both ; and # comment styles"),
+    CASE(test_null_section,         "NULL/global section handling"),
+    CASE(test_has_key,              "INI_HasKey"),
+    CASE(test_has_section,          "INI_HasSection"),
+    NULL
+};
+
+static SDLTest_TestSuiteReference iniSuite = {
+    "INI", NULL, iniTestCases, NULL
+};
+
+static SDLTest_TestSuiteReference *testSuites[] = {
+    &iniSuite,
+    NULL
+};
 
 int main(int argc, char *argv[])
 {
-    (void)argc;
-    (void)argv;
+    SDLTest_CommonState *state;
+    SDLTest_TestSuiteRunner *runner;
+    int result;
 
-    if (!SDL_Init(0)) {
-        SDL_Log("SDL_Init failed: %s", SDL_GetError());
+    state = SDLTest_CommonCreateState(argv, 0);
+    if (!state) {
         return 1;
     }
 
-    test_version();
-    test_create_destroy();
-    test_set_get_string();
-    test_set_get_int();
-    test_set_get_float();
-    test_set_get_double();
-    test_set_get_boolean();
-    test_deletion();
-    test_enumeration();
-    test_save_and_load();
-    test_parse_edge_cases();
-    test_io_stream();
-    test_quoted_values();
-    test_newline_values();
-    test_duplicate_keys();
-    test_comment_preservation();
-    test_comment_types();
-    test_null_section();
-    test_has_key();
-    test_has_section();
+    /* Create the runner before parsing args so its CLI options are recognised. */
+    runner = SDLTest_CreateTestSuiteRunner(state, testSuites);
 
-    SDL_Log("===========================================");
-    SDL_Log("Results: %d passed, %d failed", g_pass, g_fail);
-    SDL_Log("===========================================");
+    if (!SDLTest_CommonDefaultArgs(state, argc, argv)) {
+        SDLTest_DestroyTestSuiteRunner(runner);
+        SDLTest_CommonDestroyState(state);
+        return 1;
+    }
 
-    SDL_Quit();
-    return g_fail > 0 ? 1 : 0;
+    result = SDLTest_ExecuteTestSuiteRunner(runner);
+
+    SDLTest_DestroyTestSuiteRunner(runner);
+    SDLTest_CommonDestroyState(state);
+    return result;
 }

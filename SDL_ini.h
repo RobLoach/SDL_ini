@@ -1,6 +1,9 @@
 /*
  * SDL_ini.h - Single-header INI file library for SDL3
  *
+ * Version:
+ *   1.0.0
+ *
  * Usage:
  *   In exactly one C source file, define the implementation before including:
  *
@@ -95,6 +98,15 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio);
  * \see INI_Save()
  */
 SDL_ini *INI_Load(const char *file);
+
+/**
+ * Load an INI from the given string.
+ *
+ * \param text the string containing the ini data.
+ * \returns a new SDL_ini on success, or NULL on failure; call SDL_GetError() for more information.
+ * \see INI_Load()
+ */
+SDL_ini *INI_LoadString(const char *text);
 
 /**
  * Save an INI object to an SDL_IOStream.
@@ -855,6 +867,11 @@ SDL_ini *INI_Load(const char *file)
         return NULL;
     }
     return INI_Load_IO(io, true);
+}
+
+SDL_ini *INI_LoadString(const char *text)
+{
+    return INI_Load_IO(SDL_IOFromConstMem(text, SDL_strlen(text)), true);
 }
 
 bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio)
