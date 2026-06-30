@@ -209,7 +209,7 @@ bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bo
  * \param ini the SDL_ini to modify.
  * \param section section name (NULL or "" for the global section).
  * \param key the key to set.
- * \param value the string value.
+ * \param value the string value. Providing NULL will set an empty string.
  * \returns true on success or false on failure.
  */
 bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const char *value);
@@ -1128,8 +1128,11 @@ bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bo
 
 bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const char *value)
 {
-    if (!ini || !key || !value) {
+    if (!ini || !key) {
         return SDL_SetError("INI_SetString: invalid arguments");
+    }
+    if (!value) {
+        value = "";
     }
 
     const char *sec_name = INI__section_name(section);
