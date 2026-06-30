@@ -92,6 +92,9 @@ Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint
 float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value);
 double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, double default_value);
 bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value);
+bool INI_HasSection(const SDL_ini *ini, const char *section);
+bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key);
+bool INI_HasValue(const SDL_ini *ini, const char *section, const char *key);
 
 // Set
 
@@ -100,8 +103,6 @@ bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value
 bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value);
 bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double value);
 bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value);
-bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key);
-bool INI_HasSection(const SDL_ini *ini, const char *section);
 bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key);
 bool INI_RemoveSection(SDL_ini *ini, const char *section);
 
