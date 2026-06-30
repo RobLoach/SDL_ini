@@ -107,8 +107,8 @@ bool INI_RemoveSection(SDL_ini *ini, const char *section);
 
 // Enumerate
 
-typedef void (SDLCALL *INI_EnumerateSectionsCallback)(const SDL_ini *ini, const char *section, void *userdata);
-typedef void (SDLCALL *INI_EnumerateKeysCallback)(const SDL_ini *ini, const char *key,  const char *value, void *userdata);
+typedef void (SDLCALL *INI_EnumerateSectionsCallback)(void *userdata, const SDL_ini *ini, const char *section);
+typedef void (SDLCALL *INI_EnumerateKeysCallback)(void *userdata, const SDL_ini *ini, const char* section, const char *key,  const char *value);
 void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback callback, void *userdata);
 void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata);
 ```

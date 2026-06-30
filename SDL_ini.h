@@ -316,7 +316,7 @@ bool INI_RemoveSection(SDL_ini *ini, const char *section);
  * \param userdata user-provided pointer.
  * \param section the section name (empty string for the global section).
  */
-typedef void (SDLCALL *INI_EnumerateSectionsCallback)(const SDL_ini *ini, const char *section, void *userdata);
+typedef void (SDLCALL *INI_EnumerateSectionsCallback)(void *userdata, const SDL_ini *ini, const char *section);
 
 /**
  * Callback invoked for each key/value pair during enumeration.
@@ -325,7 +325,7 @@ typedef void (SDLCALL *INI_EnumerateSectionsCallback)(const SDL_ini *ini, const 
  * \param key the key name.
  * \param value the associated value.
  */
-typedef void (SDLCALL *INI_EnumerateKeysCallback)(const SDL_ini *ini, const char *key, const char *value, void *userdata);
+typedef void (SDLCALL *INI_EnumerateKeysCallback)(void *userdata, const SDL_ini *ini, const char* section, const char *key, const char *value);
 
 /**
  * Enumerate all sections in the INI.
@@ -1214,7 +1214,7 @@ void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback cal
         return;
     }
     for (int i = 0; i < ini->section_count; ++i) {
-        callback(ini, ini->sections[i].name, userdata);
+        callback(userdata, ini, ini->sections[i].name);
     }
 }
 
@@ -1229,7 +1229,7 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
     }
     for (int i = 0; i < sec->item_count; ++i) {
         if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
-            callback(ini, sec->items[i].key, sec->items[i].value, userdata);
+            callback(userdata, ini, section, sec->items[i].key, sec->items[i].value);
         }
     }
 }

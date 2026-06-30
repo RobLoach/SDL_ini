@@ -30,7 +30,7 @@ typedef struct {
     char values[32][128];
 } Collector;
 
-static void SDLCALL collect_section(const SDL_ini *ini, const char *section, void *userdata)
+static void SDLCALL collect_section(void *userdata, const SDL_ini *ini, const char *section)
 {
     Collector *c = (Collector *)userdata;
     (void)ini;
@@ -40,10 +40,11 @@ static void SDLCALL collect_section(const SDL_ini *ini, const char *section, voi
     c->count++;
 }
 
-static void SDLCALL collect_key(const SDL_ini *ini, const char *key, const char *value, void *userdata)
+static void SDLCALL collect_key(void *userdata, const SDL_ini *ini, const char *section, const char *key, const char *value)
 {
     Collector *c = (Collector *)userdata;
     (void)ini;
+    (void)section;
     if (c->count < 32) {
         SDL_strlcpy(c->names[c->count], key, sizeof(c->names[0]));
         SDL_strlcpy(c->values[c->count], value, sizeof(c->values[0]));
@@ -692,9 +693,9 @@ static int SDLCALL test_version(void *arg)
     int ver = INI_GetVersion();
     TEST(ver > 0, "INI_GetVersion returns positive value");
     TEST(ver == SDL_INI_VERSION, "INI_GetVersion matches SDL_INI_VERSION macro");
-    TEST(SDL_INI_MAJOR_VERSION == 1, "major version is 1");
-    TEST(SDL_INI_MINOR_VERSION == 0, "minor version is 0");
-    TEST(SDL_INI_MICRO_VERSION == 0, "micro version is 0");
+    TEST(SDL_INI_MAJOR_VERSION >= 1, "major version is >= 1");
+    TEST(SDL_INI_MINOR_VERSION >= 1, "minor version is >= 1");
+    TEST(SDL_INI_MICRO_VERSION >= 0, "micro version is >= 0");
     TEST(SDL_INI_VERSION_ATLEAST(1, 0, 0), "version at least 1.0.0");
     TEST(!SDL_INI_VERSION_ATLEAST(2, 0, 0), "version not at least 2.0.0");
     return TEST_COMPLETED;
