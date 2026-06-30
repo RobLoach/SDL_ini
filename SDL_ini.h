@@ -1159,7 +1159,13 @@ bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double va
 
 bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value)
 {
-    return INI_SetDouble(ini, section, key, (double)value);
+    char *str = NULL;
+    if (SDL_asprintf(&str, "%.8g", (double)value) < 0 || !str) {
+        return SDL_OutOfMemory();
+    }
+    bool ok = INI_SetString(ini, section, key, str);
+    SDL_free(str);
+    return ok;
 }
 
 bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value)
