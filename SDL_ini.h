@@ -993,8 +993,7 @@ bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key)
     if (!sec) {
         return false;
     }
-    SDL_ini_item * item = INI__find_entry(sec, key);
-    return item != NULL && item->value && item->value[0] != '\0';
+    return INI__find_entry(sec, key) != NULL;
 }
 
 bool INI_HasSection(const SDL_ini *ini, const char *section)
