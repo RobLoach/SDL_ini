@@ -45,24 +45,50 @@ extern "C" {
 #endif
 
 /**
+ * \defgroup SDL_ini SDL_ini
+ * @{
+ */
+
+/**
  * An SDL_ini instance to handle the data for an INI file.
  * \see INI_Create()
  * \see INI_Destroy()
  */
 typedef struct SDL_ini SDL_ini;
 
+/**
+ * The major version of SDL_ini.
+ *
+ * \see SDL_INI_VERSION
+ * \see SDL_INI_VERSION_ATLEAST
+ */
 #define SDL_INI_MAJOR_VERSION 1
-#define SDL_INI_MINOR_VERSION 1
-#define SDL_INI_MICRO_VERSION 0
-#define SDL_INI_VERSION \
-    SDL_VERSIONNUM(SDL_INI_MAJOR_VERSION, SDL_INI_MINOR_VERSION, SDL_INI_MICRO_VERSION)
-#define SDL_INI_VERSION_ATLEAST(X, Y, Z) \
-    (SDL_INI_VERSION >= SDL_VERSIONNUM(X, Y, Z))
 
 /**
- * \defgroup SDL_ini SDL_ini
- * @{
+ * The minor version of SDL_ini.
+ *
+ * \see SDL_INI_VERSION
+ * \see SDL_INI_VERSION_ATLEAST
  */
+#define SDL_INI_MINOR_VERSION 1
+
+/**
+ * The micro/patch version of SDL_ini.
+ *
+ * \see SDL_INI_VERSION
+ * \see SDL_INI_VERSION_ATLEAST
+ */
+#define SDL_INI_MICRO_VERSION 0
+
+/**
+ * Retrieves an integer representation of the of the SDL_ini version.
+ */
+#define SDL_INI_VERSION SDL_VERSIONNUM(SDL_INI_MAJOR_VERSION, SDL_INI_MINOR_VERSION, SDL_INI_MICRO_VERSION)
+
+/**
+ * Checks if SDL_ini is at least the given version.
+ */
+#define SDL_INI_VERSION_ATLEAST(X, Y, Z) (SDL_INI_VERSION >= SDL_VERSIONNUM(X, Y, Z))
 
 /**
  * Get the version of SDL_ini that is linked against.
@@ -366,6 +392,25 @@ void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback cal
  */
 void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata);
 
+#ifdef __DOXYGEN
+/**
+ * In exactly one C source file, define \c SDL_INI_IMPLEMENTATION before including `SDL_ini.h`.
+ *
+ * \code
+ * #define SDL_INI_IMPLEMENTATION
+ * #include "SDL_ini.h"
+ * \endcode
+ *
+ * In all other files, just include the header normally:
+ * \code
+ * #include "SDL_ini.h"
+ * \endcode
+ *
+ * \see INI_Create()
+ */
+#define SDL_INI_IMPLEMENTATION
+#endif /* __DOXYGEN */
+
 /**
  * @}
  */
@@ -373,6 +418,8 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* SDL_INI_H_ */
 
 #ifdef SDL_INI_IMPLEMENTATION
 #ifndef SDL_INI_IMPLEMENTATION_ONCE
@@ -1278,24 +1325,3 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
 
 #endif /* SDL_INI_IMPLEMENTATION_ONCE */
 #endif /* SDL_INI_IMPLEMENTATION */
-
-#ifdef __DOXYGEN
-/**
- * In exactly one C source file, define \c SDL_INI_IMPLEMENTATION before including `SDL_ini.h`.
- *
- * \code
- * #define SDL_INI_IMPLEMENTATION
- * #include "SDL_ini.h"
- * \endcode
- *
- * In all other files, just include the header normally:
- * \code
- * #include "SDL_ini.h"
- * \endcode
- *
- * \see INI_Create()
- */
-#define SDL_INI_IMPLEMENTATION
-#endif /* __DOXYGEN */
-
-#endif /* SDL_INI_H_ */
