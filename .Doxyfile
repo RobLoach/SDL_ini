@@ -2,7 +2,7 @@
 
 PROJECT_NAME           = "SDL_ini"
 PROJECT_BRIEF          = "Single-header INI file library for SDL3"
-PROJECT_NUMBER         = 1.0.0
+PROJECT_NUMBER         = 1.1.0
 OUTPUT_DIRECTORY       = docs
 INPUT                  = SDL_ini.h README.md
 USE_MDFILE_AS_MAINPAGE = README.md
