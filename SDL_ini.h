@@ -301,6 +301,24 @@ bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool val
  * \see INI_HasKey()
  * \see INI_RemoveSection()
  */
+/**
+ * Check whether the INI has been modified since creation or last load.
+ *
+ * \param ini the SDL_ini to query.
+ * \returns true if any key has been set, removed, or a section removed.
+ * \see INI_SetDirty()
+ */
+bool INI_IsDirty(const SDL_ini *ini);
+
+/**
+ * Manually set or clear the dirty flag.
+ *
+ * \param ini the SDL_ini to modify.
+ * \param dirty the new dirty state.
+ * \see INI_IsDirty()
+ */
+void INI_SetDirty(SDL_ini *ini, bool dirty);
+
 bool INI_HasSection(const SDL_ini *ini, const char *section);
 
 /**
@@ -470,6 +488,7 @@ struct SDL_ini {
     SDL_ini_section *sections;
     int section_count;
     int section_capacity;
+    bool dirty;
 };
 
 /**
@@ -1095,6 +1114,21 @@ bool INI_HasValue(const SDL_ini *ini, const char *section, const char *key)
     return item != NULL && item->value && item->value[0] != '\0';
 }
 
+bool INI_IsDirty(const SDL_ini *ini)
+{
+    if (!ini) {
+        return false;
+    }
+    return ini->dirty;
+}
+
+void INI_SetDirty(SDL_ini *ini, bool dirty)
+{
+    if (ini) {
+        ini->dirty = dirty;
+    }
+}
+
 Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint64 default_value)
 {
     const char *str = INI_GetString(ini, section, key, NULL);
@@ -1197,6 +1231,7 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
         }
         SDL_free(item->value);
         item->value = new_value;
+        ini->dirty = true;
         return true;
     }
 
@@ -1215,6 +1250,7 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
         return SDL_OutOfMemory();
     }
     sec->item_count++;
+    ini->dirty = true;
     return true;
 }
 
@@ -1273,6 +1309,7 @@ bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key)
             // Shift remaining items down to preserve order.
             SDL_memmove(&sec->items[i], &sec->items[i + 1], (size_t)(sec->item_count - 1 - i) * sizeof(sec->items[0]));
             sec->item_count--;
+            ini->dirty = true;
             return true;
         }
     }
@@ -1291,6 +1328,7 @@ bool INI_RemoveSection(SDL_ini *ini, const char *section)
             SDL_memmove(&ini->sections[i], &ini->sections[i + 1],
                         (size_t)(ini->section_count - 1 - i) * sizeof(ini->sections[0]));
             ini->section_count--;
+            ini->dirty = true;
             return true;
         }
     }
