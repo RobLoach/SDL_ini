@@ -737,6 +737,58 @@ static int SDLCALL test_merge(void *arg)
     TEST_STR(INI_GetString(a, "A", "key", "?"), "merged", "Merge_IO overwrites");
     TEST_STR(INI_GetString(a, "A", "new", "?"), "yes", "Merge_IO adds key");
     INI_Destroy(a);
+  
+    return TEST_COMPLETED;
+}
+
+static int SDLCALL test_dirty_flag(void *arg)
+{
+    (void)arg;
+
+    // Fresh and loaded INIs start clean.
+    SDL_ini *ini = INI_Create();
+    TEST(INI_IsDirty(ini) == false, "new INI is not dirty");
+    TEST(INI_IsDirty(NULL) == false, "IsDirty(NULL) is false");
+
+    // SetString marks dirty.
+    INI_SetString(ini, "s", "k", "v");
+    TEST(INI_IsDirty(ini) == true, "dirty after SetString");
+
+    // Manual clear.
+    INI_SetDirty(ini, false);
+    TEST(INI_IsDirty(ini) == false, "clean after SetDirty(false)");
+
+    // Updating existing key marks dirty.
+    INI_SetString(ini, "s", "k", "v2");
+    TEST(INI_IsDirty(ini) == true, "dirty after update");
+    INI_SetDirty(ini, false);
+
+    // SetInt marks dirty.
+    INI_SetInt(ini, "s", "n", 42);
+    TEST(INI_IsDirty(ini) == true, "dirty after SetInt");
+    INI_SetDirty(ini, false);
+
+    // RemoveKey marks dirty.
+    INI_RemoveKey(ini, "s", "n");
+    TEST(INI_IsDirty(ini) == true, "dirty after RemoveKey");
+    INI_SetDirty(ini, false);
+
+    // RemoveSection marks dirty.
+    INI_RemoveSection(ini, "s");
+    TEST(INI_IsDirty(ini) == true, "dirty after RemoveSection");
+
+    INI_Destroy(ini);
+
+    // Loaded INI starts clean.
+    ini = INI_LoadString("[Test]\nkey = value\n");
+    TEST(ini != NULL, "load INI");
+    if (ini) {
+        TEST(INI_IsDirty(ini) == false, "loaded INI is not dirty");
+        INI_Destroy(ini);
+    }
+
+    // SetDirty(NULL) doesn't crash.
+    INI_SetDirty(NULL, true);
 
     return TEST_COMPLETED;
 }
@@ -765,6 +817,7 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_has_key,              "INI_HasKey"),
     CASE(test_has_section,          "INI_HasSection"),
     CASE(test_merge,                "Merge INI files"),
+    CASE(test_dirty_flag,           "Dirty flag tracking"),
     NULL
 };
 
