@@ -410,6 +410,52 @@ void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback cal
  */
 void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata);
 
+/**
+ * Merge all sections and keys from src into dest.
+ *
+ * Duplicate keys in dest are overwritten by the values from src.
+ * Sections that exist only in src are created in dest.
+ *
+ * \param dest the destination SDL_ini.
+ * \param src the source SDL_ini to merge from.
+ * \returns true on success or false on failure.
+ * \see INI_Merge_IO()
+ * \see INI_MergeFile()
+ */
+bool INI_Merge(SDL_ini *dest, const SDL_ini *src);
+
+/**
+ * Load an INI from an SDL_IOStream and merge it into dest.
+ *
+ * \param dest the destination SDL_ini.
+ * \param src the SDL_IOStream to read from.
+ * \param closeio if true, the stream is closed after reading.
+ * \returns true on success or false on failure.
+ * \see INI_Merge()
+ */
+bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio);
+
+/**
+ * Load an INI from a file and merge it into dest.
+ *
+ * \param dest the destination SDL_ini.
+ * \param file the path to the INI file.
+ * \returns true on success or false on failure.
+ * \see INI_Merge()
+ */
+bool INI_MergeFile(SDL_ini *dest, const char *file);
+
+/**
+ * Load multiple INI files, merging them in order.
+ *
+ * Later files overwrite keys from earlier files.
+ *
+ * \param files NULL-terminated array of file paths.
+ * \returns a new SDL_ini on success, or NULL on failure.
+ * \see INI_Merge()
+ */
+SDL_ini *INI_LoadMultiple(const char **files);
+
 #ifdef __DOXYGEN
 /**
  * In exactly one C source file, define \c SDL_INI_IMPLEMENTATION before including `SDL_ini.h`.
@@ -1359,6 +1405,65 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
             callback(userdata, ini, section, sec->items[i].key, sec->items[i].value);
         }
     }
+}
+
+bool INI_Merge(SDL_ini *dest, const SDL_ini *src)
+{
+    if (!dest || !src) {
+        return SDL_SetError("INI_Merge: invalid arguments");
+    }
+    for (int s = 0; s < src->section_count; ++s) {
+        const SDL_ini_section *sec = &src->sections[s];
+        for (int i = 0; i < sec->item_count; ++i) {
+            if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
+                if (!INI_SetString(dest, sec->name, sec->items[i].key, sec->items[i].value)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio)
+{
+    SDL_ini *tmp = INI_Load_IO(src, closeio);
+    if (!tmp) {
+        return false;
+    }
+    bool ok = INI_Merge(dest, tmp);
+    INI_Destroy(tmp);
+    return ok;
+}
+
+bool INI_MergeFile(SDL_ini *dest, const char *file)
+{
+    SDL_ini *tmp = INI_Load(file);
+    if (!tmp) {
+        return false;
+    }
+    bool ok = INI_Merge(dest, tmp);
+    INI_Destroy(tmp);
+    return ok;
+}
+
+SDL_ini *INI_LoadMultiple(const char **files)
+{
+    if (!files) {
+        SDL_SetError("INI_LoadMultiple: files is NULL");
+        return NULL;
+    }
+    SDL_ini *ini = INI_Create();
+    if (!ini) {
+        return NULL;
+    }
+    for (int i = 0; files[i]; ++i) {
+        if (!INI_MergeFile(ini, files[i])) {
+            INI_Destroy(ini);
+            return NULL;
+        }
+    }
+    return ini;
 }
 
 #endif /* SDL_INI_IMPLEMENTATION_ONCE */
