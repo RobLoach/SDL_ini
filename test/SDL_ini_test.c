@@ -757,6 +757,98 @@ static int SDLCALL test_crlf(void *arg)
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_merge(void *arg)
+{
+    (void)arg;
+
+    SDL_ini *a = INI_LoadString("[S1]\nk1 = v1\nk2 = v2\n[S2]\nx = 10\n");
+    SDL_ini *b = INI_LoadString("[S1]\nk2 = overwritten\nk3 = new\n[S3]\ny = 20\n");
+    TEST(a != NULL && b != NULL, "parse merge inputs");
+
+    TEST(INI_Merge(a, b) == true, "merge succeeds");
+
+    // Existing key preserved.
+    TEST_STR(INI_GetString(a, "S1", "k1", "?"), "v1", "k1 preserved");
+    // Duplicate key overwritten by src.
+    TEST_STR(INI_GetString(a, "S1", "k2", "?"), "overwritten", "k2 overwritten");
+    // New key added.
+    TEST_STR(INI_GetString(a, "S1", "k3", "?"), "new", "k3 added");
+    // Original section preserved.
+    TEST(INI_GetInt(a, "S2", "x", 0) == 10, "S2.x preserved");
+    // New section added.
+    TEST(INI_GetInt(a, "S3", "y", 0) == 20, "S3.y added");
+
+    INI_Destroy(a);
+    INI_Destroy(b);
+
+    // NULL safety.
+    TEST(INI_Merge(NULL, NULL) == false, "Merge(NULL,NULL) fails");
+
+    // Merge_IO via dynamic mem.
+    a = INI_Create();
+    INI_SetString(a, "A", "key", "original");
+    const char *src_text = "[A]\nkey = merged\nnew = yes\n";
+    SDL_IOStream *io = SDL_IOFromConstMem(src_text, SDL_strlen(src_text));
+    TEST(INI_Merge_IO(a, io, true) == true, "Merge_IO succeeds");
+    TEST_STR(INI_GetString(a, "A", "key", "?"), "merged", "Merge_IO overwrites");
+    TEST_STR(INI_GetString(a, "A", "new", "?"), "yes", "Merge_IO adds key");
+    INI_Destroy(a);
+  
+    return TEST_COMPLETED;
+}
+
+static int SDLCALL test_dirty_flag(void *arg)
+{
+    (void)arg;
+
+    // Fresh and loaded INIs start clean.
+    SDL_ini *ini = INI_Create();
+    TEST(INI_IsDirty(ini) == false, "new INI is not dirty");
+    TEST(INI_IsDirty(NULL) == false, "IsDirty(NULL) is false");
+
+    // SetString marks dirty.
+    INI_SetString(ini, "s", "k", "v");
+    TEST(INI_IsDirty(ini) == true, "dirty after SetString");
+
+    // Manual clear.
+    INI_SetDirty(ini, false);
+    TEST(INI_IsDirty(ini) == false, "clean after SetDirty(false)");
+
+    // Updating existing key marks dirty.
+    INI_SetString(ini, "s", "k", "v2");
+    TEST(INI_IsDirty(ini) == true, "dirty after update");
+    INI_SetDirty(ini, false);
+
+    // SetInt marks dirty.
+    INI_SetInt(ini, "s", "n", 42);
+    TEST(INI_IsDirty(ini) == true, "dirty after SetInt");
+    INI_SetDirty(ini, false);
+
+    // RemoveKey marks dirty.
+    INI_RemoveKey(ini, "s", "n");
+    TEST(INI_IsDirty(ini) == true, "dirty after RemoveKey");
+    INI_SetDirty(ini, false);
+
+    // RemoveSection marks dirty.
+    INI_RemoveSection(ini, "s");
+    TEST(INI_IsDirty(ini) == true, "dirty after RemoveSection");
+
+    INI_Destroy(ini);
+
+    // Loaded INI starts clean.
+    ini = INI_LoadString("[Test]\nkey = value\n");
+    TEST(ini != NULL, "load INI");
+    if (ini) {
+        TEST(INI_IsDirty(ini) == false, "loaded INI is not dirty");
+        INI_Destroy(ini);
+    }
+
+    // SetDirty(NULL) doesn't crash.
+    INI_SetDirty(NULL, true);
+
+    return TEST_COMPLETED;
+}
+
 #define CASE(fn, desc) &(const SDLTest_TestCaseReference){ fn, #fn, desc, TEST_ENABLED }
 
 static const SDLTest_TestCaseReference *iniTestCases[] = {
@@ -781,6 +873,8 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_has_key,              "INI_HasKey"),
     CASE(test_has_section,          "INI_HasSection"),
     CASE(test_crlf,                 "CRLF detection and round-trip"),
+    CASE(test_merge,                "Merge INI files"),
+    CASE(test_dirty_flag,           "Dirty flag tracking"),
     NULL
 };
 
