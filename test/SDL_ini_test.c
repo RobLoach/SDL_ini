@@ -701,6 +701,62 @@ static int SDLCALL test_version(void *arg)
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_crlf(void *arg)
+{
+    (void)arg;
+
+    // Load a CRLF-encoded string and verify values parse correctly.
+    SDL_ini *ini = INI_LoadString("[Section]\r\nkey = value\r\nnum = 42\r\n");
+    TEST(ini != NULL, "parse CRLF input");
+    if (ini) {
+        TEST_STR(INI_GetString(ini, "Section", "key", "?"), "value", "CRLF value parsed");
+        TEST(INI_GetInt(ini, "Section", "num", 0) == 42, "CRLF int parsed");
+
+        // Save and verify output uses CRLF.
+        SDL_IOStream *out = SDL_IOFromDynamicMem();
+        TEST(INI_Save_IO(ini, out, false) == true, "save CRLF");
+        size_t len = (size_t)SDL_TellIO(out);
+        SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
+        char *buf = (char *)SDL_malloc(len + 1);
+        SDL_ReadIO(out, buf, len);
+        buf[len] = '\0';
+        SDL_CloseIO(out);
+
+        TEST(SDL_strstr(buf, "\r\n") != NULL, "output contains CRLF");
+        TEST(buf[len - 1] == '\n' && buf[len - 2] == '\r', "lines end with CRLF");
+
+        // Reload the CRLF output and verify round-trip.
+        SDL_ini *reloaded = INI_LoadString(buf);
+        TEST(reloaded != NULL, "reload CRLF output");
+        if (reloaded) {
+            TEST_STR(INI_GetString(reloaded, "Section", "key", "?"), "value", "CRLF round-trip");
+            INI_Destroy(reloaded);
+        }
+        SDL_free(buf);
+        INI_Destroy(ini);
+    }
+
+    // LF-only input should save with LF.
+    ini = INI_LoadString("[Section]\nkey = value\n");
+    TEST(ini != NULL, "parse LF input");
+    if (ini) {
+        SDL_IOStream *out = SDL_IOFromDynamicMem();
+        INI_Save_IO(ini, out, false);
+        size_t len = (size_t)SDL_TellIO(out);
+        SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
+        char *buf = (char *)SDL_malloc(len + 1);
+        SDL_ReadIO(out, buf, len);
+        buf[len] = '\0';
+        SDL_CloseIO(out);
+
+        TEST(SDL_strstr(buf, "\r\n") == NULL, "LF input produces LF output");
+        SDL_free(buf);
+        INI_Destroy(ini);
+    }
+
+    return TEST_COMPLETED;
+}
+
 static int SDLCALL test_merge(void *arg)
 {
     (void)arg;
@@ -816,6 +872,7 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_null_section,         "NULL/global section handling"),
     CASE(test_has_key,              "INI_HasKey"),
     CASE(test_has_section,          "INI_HasSection"),
+    CASE(test_crlf,                 "CRLF detection and round-trip"),
     CASE(test_merge,                "Merge INI files"),
     CASE(test_dirty_flag,           "Dirty flag tracking"),
     NULL

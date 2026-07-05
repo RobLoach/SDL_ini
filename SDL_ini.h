@@ -534,6 +534,7 @@ struct SDL_ini {
     SDL_ini_section *sections;
     int section_count;
     int section_capacity;
+    bool crlf;
     bool dirty;
 };
 
@@ -843,6 +844,14 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
         return NULL;
     }
 
+    ini->crlf = false;
+    for (size_t i = 0; i < datasize; ++i) {
+        if (data[i] == '\r') {
+            ini->crlf = true;
+            break;
+        }
+    }
+
     // Current section name (empty = global).
     const char *cur_section = "";
 
@@ -1015,6 +1024,7 @@ bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio)
         return SDL_SetError("INI_Save_IO: invalid arguments");
     }
 
+    const char *eol = ini->crlf ? "\r\n" : "\n";
     bool wrote_any = false;
     bool last_was_blank = false;
 
@@ -1030,9 +1040,9 @@ bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio)
         if (!is_global) {
             // Add a blank line separator before section headers when needed.
             if (wrote_any && !last_was_blank) {
-                SDL_IOprintf(dst, "\n");
+                SDL_IOprintf(dst, "%s", eol);
             }
-            SDL_IOprintf(dst, "[%s]\n", sec->name);
+            SDL_IOprintf(dst, "[%s]%s", sec->name, eol);
             last_was_blank = false;
             wrote_any = true;
         }
@@ -1050,20 +1060,20 @@ bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio)
                         }
                         return false; // SDL_OutOfMemory() already set
                     }
-                    SDL_IOprintf(dst, "%s = \"%s\"\n", item->key, esc);
+                    SDL_IOprintf(dst, "%s = \"%s\"%s", item->key, esc, eol);
                     SDL_free(esc);
                 } else {
-                    SDL_IOprintf(dst, "%s = %s\n", item->key, val);
+                    SDL_IOprintf(dst, "%s = %s%s", item->key, val, eol);
                 }
                 last_was_blank = false;
                 break;
             }
             case SDL_INI_ITEM_COMMENT:
-                SDL_IOprintf(dst, "%s\n", item->comment);
+                SDL_IOprintf(dst, "%s%s", item->comment, eol);
                 last_was_blank = false;
                 break;
             case SDL_INI_ITEM_BLANK:
-                SDL_IOprintf(dst, "\n");
+                SDL_IOprintf(dst, "%s", eol);
                 last_was_blank = true;
                 break;
             }
