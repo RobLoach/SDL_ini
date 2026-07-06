@@ -849,6 +849,38 @@ static int SDLCALL test_dirty_flag(void *arg)
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_parse_errors(void *arg)
+{
+    (void)arg;
+    SDL_ini *ini;
+
+    // Unclosed section bracket on line 1 should fail.
+    ini = INI_LoadString("[NoClose\nkey = value\n");
+    TEST(ini == NULL, "unclosed bracket returns NULL");
+    if (ini == NULL) {
+        const char *err = SDL_GetError();
+        TEST(SDL_strstr(err, "line 1") != NULL, "error mentions line 1");
+        TEST(SDL_strstr(err, "missing closing bracket") != NULL, "error mentions missing bracket");
+    }
+    INI_Destroy(ini);
+
+    // Unclosed bracket on line 3.
+    ini = INI_LoadString("[ok]\nkey = value\n[bad\n");
+    TEST(ini == NULL, "unclosed bracket on line 3 returns NULL");
+    if (ini == NULL) {
+        const char *err = SDL_GetError();
+        TEST(SDL_strstr(err, "line 3") != NULL, "error mentions line 3");
+    }
+    INI_Destroy(ini);
+
+    // Valid INI should still parse correctly.
+    ini = INI_LoadString("[section]\nkey = value\n");
+    TEST(ini != NULL, "valid INI loads ok");
+    INI_Destroy(ini);
+
+    return TEST_COMPLETED;
+}
+
 #define CASE(fn, desc) &(const SDLTest_TestCaseReference){ fn, #fn, desc, TEST_ENABLED }
 
 static const SDLTest_TestCaseReference *iniTestCases[] = {
@@ -875,6 +907,7 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_crlf,                 "CRLF detection and round-trip"),
     CASE(test_merge,                "Merge INI files"),
     CASE(test_dirty_flag,           "Dirty flag tracking"),
+    CASE(test_parse_errors,         "Parse error line numbers"),
     NULL
 };
 
