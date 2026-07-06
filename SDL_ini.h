@@ -862,6 +862,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
 
     // Current section name (empty = global).
     const char *cur_section = "";
+    int line_number = 1;
 
     char *line = data;
     while (line && *line) {
@@ -921,6 +922,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
             }
             sec->item_count++;
             line = eol ? eol + 1 : NULL;
+            line_number++;
             continue;
         }
 
@@ -939,8 +941,14 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
                     return NULL;
                 }
                 cur_section = sec->name;  // point at the owned copy
+            } else {
+                SDL_SetError("INI parse error on line %d: missing closing bracket for section", line_number);
+                INI_Destroy(ini);
+                SDL_free(data);
+                return NULL;
             }
             line = eol ? eol + 1 : NULL;
+            line_number++;
             continue;
         }
 
@@ -1003,6 +1011,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
         // Lines without '=' are silently ignored.
 
         line = eol ? eol + 1 : NULL;
+        line_number++;
     }
 
     SDL_free(data);
