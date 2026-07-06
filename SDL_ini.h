@@ -631,8 +631,16 @@ static char *INI__unquote(char *s)
  */
 static char *INI__escape(const char *s)
 {
-    size_t len = SDL_strlen(s);
-    char *out = (char *)SDL_malloc(len * 2 + 1);
+    size_t needed = 1;
+    for (const char *p = s; *p; ++p) {
+        switch (*p) {
+        case '\\': case '"': case '\n': case '\r': case '\t':
+            needed += 2; break;
+        default:
+            needed += 1; break;
+        }
+    }
+    char *out = (char *)SDL_malloc(needed);
     if (!out) {
         SDL_OutOfMemory();
         return NULL;
