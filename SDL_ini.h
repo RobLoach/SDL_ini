@@ -1312,35 +1312,23 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
 
 bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value)
 {
-    char *str = NULL;
-    if (SDL_asprintf(&str, "%" SDL_PRIs64, value) < 0 || !str) {
-        return SDL_OutOfMemory();
-    }
-    bool ok = INI_SetString(ini, section, key, str);
-    SDL_free(str);
-    return ok;
+    char buf[24];
+    SDL_snprintf(buf, sizeof(buf), "%" SDL_PRIs64, value);
+    return INI_SetString(ini, section, key, buf);
 }
 
 bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double value)
 {
-    char *str = NULL;
-    if (SDL_asprintf(&str, "%.17g", value) < 0 || !str) {
-        return SDL_OutOfMemory();
-    }
-    bool ok = INI_SetString(ini, section, key, str);
-    SDL_free(str);
-    return ok;
+    char buf[32];
+    SDL_snprintf(buf, sizeof(buf), "%.17g", value);
+    return INI_SetString(ini, section, key, buf);
 }
 
 bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value)
 {
-    char *str = NULL;
-    if (SDL_asprintf(&str, "%.8g", (double)value) < 0 || !str) {
-        return SDL_OutOfMemory();
-    }
-    bool ok = INI_SetString(ini, section, key, str);
-    SDL_free(str);
-    return ok;
+    char buf[24];
+    SDL_snprintf(buf, sizeof(buf), "%.8g", (double)value);
+    return INI_SetString(ini, section, key, buf);
 }
 
 bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value)
