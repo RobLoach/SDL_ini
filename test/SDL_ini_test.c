@@ -849,6 +849,43 @@ static int SDLCALL test_dirty_flag(void *arg)
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_loop_utilities(void *arg)
+{
+    (void)arg;
+    SDL_ini *ini = INI_Create();
+    INI_SetString(ini, NULL,    "global_key", "gv");
+    INI_SetString(ini, "Alpha", "a1", "v1");
+    INI_SetString(ini, "Alpha", "a2", "v2");
+    INI_SetString(ini, "Beta",  "b1", "v3");
+
+    TEST(INI_GetSectionCount(ini) == 3, "GetSectionCount == 3");
+    TEST(INI_GetSectionCount(NULL) == 0, "GetSectionCount(NULL) == 0");
+
+    TEST_STR(INI_GetSection(ini, 0), "",      "GetSection 0 is global");
+    TEST_STR(INI_GetSection(ini, 1), "Alpha", "GetSection 1 is Alpha");
+    TEST_STR(INI_GetSection(ini, 2), "Beta",  "GetSection 2 is Beta");
+    TEST(INI_GetSection(ini, 3) == NULL, "GetSection out-of-range is NULL");
+    TEST(INI_GetSection(NULL, 0) == NULL, "GetSection(NULL ini) is NULL");
+
+    TEST(INI_GetKeyCount(ini, "Alpha") == 2, "GetKeyCount Alpha == 2");
+    TEST(INI_GetKeyCount(ini, NULL)    == 1, "GetKeyCount global == 1");
+    TEST(INI_GetKeyCount(ini, "NoSuch") == 0, "GetKeyCount missing == 0");
+    TEST(INI_GetKeyCount(NULL, "Alpha") == 0, "GetKeyCount(NULL ini) == 0");
+
+    TEST_STR(INI_GetKey(ini, "Alpha", 0), "a1", "GetKey Alpha 0 == a1");
+    TEST_STR(INI_GetKey(ini, "Alpha", 1), "a2", "GetKey Alpha 1 == a2");
+    TEST(INI_GetKey(ini, "Alpha", 2) == NULL, "GetKey out-of-range is NULL");
+    TEST(INI_GetKey(NULL, "Alpha", 0) == NULL, "GetKey(NULL ini) is NULL");
+
+    TEST_STR(INI_GetKeyValue(ini, "Alpha", 0), "v1", "GetKeyValue Alpha 0 == v1");
+    TEST_STR(INI_GetKeyValue(ini, "Alpha", 1), "v2", "GetKeyValue Alpha 1 == v2");
+    TEST(INI_GetKeyValue(ini, "Alpha", 2) == NULL, "GetKeyValue out-of-range is NULL");
+    TEST(INI_GetKeyValue(NULL, "Alpha", 0) == NULL, "GetKeyValue(NULL ini) is NULL");
+
+    INI_Destroy(ini);
+    return TEST_COMPLETED;
+}
+
 #define CASE(fn, desc) &(const SDLTest_TestCaseReference){ fn, #fn, desc, TEST_ENABLED }
 
 static const SDLTest_TestCaseReference *iniTestCases[] = {
@@ -875,6 +912,7 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_crlf,                 "CRLF detection and round-trip"),
     CASE(test_merge,                "Merge INI files"),
     CASE(test_dirty_flag,           "Dirty flag tracking"),
+    CASE(test_loop_utilities,       "Index-based loop utilities"),
     NULL
 };
 
