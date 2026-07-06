@@ -456,6 +456,53 @@ bool INI_MergeFile(SDL_ini *dest, const char *file);
  */
 SDL_ini *INI_LoadMultiple(const char **files);
 
+/**
+ * Return the number of sections in the INI.
+ *
+ * \param ini the SDL_ini to query.
+ * \returns the section count, or 0 if ini is NULL.
+ */
+int INI_GetSectionCount(const SDL_ini *ini);
+
+/**
+ * Return the name of the section at the given index.
+ *
+ * \param ini the SDL_ini to query.
+ * \param index zero-based section index.
+ * \returns the section name, or NULL if out of range.
+ */
+const char *INI_GetSection(const SDL_ini *ini, int index);
+
+/**
+ * Return the number of key/value entries in a section (comments and blank
+ * lines are not counted).
+ *
+ * \param ini the SDL_ini to query.
+ * \param section section name (NULL or "" for the global section).
+ * \returns the key count, or 0 if the section does not exist.
+ */
+int INI_GetKeyCount(const SDL_ini *ini, const char *section);
+
+/**
+ * Return the key name at the given index within a section.
+ *
+ * \param ini the SDL_ini to query.
+ * \param section section name (NULL or "" for the global section).
+ * \param index zero-based index among key/value entries only.
+ * \returns the key name, or NULL if out of range.
+ */
+const char *INI_GetKey(const SDL_ini *ini, const char *section, int index);
+
+/**
+ * Return the value at the given key index within a section.
+ *
+ * \param ini the SDL_ini to query.
+ * \param section section name (NULL or "" for the global section).
+ * \param index zero-based index among key/value entries only.
+ * \returns the value string, or NULL if out of range.
+ */
+const char *INI_GetKeyValue(const SDL_ini *ini, const char *section, int index);
+
 #ifdef __DOXYGEN
 /**
  * In exactly one C source file, define \c SDL_INI_IMPLEMENTATION before including `SDL_ini.h`.
@@ -1470,6 +1517,60 @@ SDL_ini *INI_LoadMultiple(const char **files)
         }
     }
     return ini;
+}
+
+int INI_GetSectionCount(const SDL_ini *ini)
+{
+    if (!ini) return 0;
+    return ini->section_count;
+}
+
+const char *INI_GetSection(const SDL_ini *ini, int index)
+{
+    if (!ini || index < 0 || index >= ini->section_count) return NULL;
+    return ini->sections[index].name;
+}
+
+int INI_GetKeyCount(const SDL_ini *ini, const char *section)
+{
+    if (!ini) return 0;
+    const SDL_ini_section *sec = INI__find_section(ini, INI__section_name(section));
+    if (!sec) return 0;
+    int count = 0;
+    for (int i = 0; i < sec->item_count; ++i) {
+        if (sec->items[i].type == SDL_INI_ITEM_ENTRY) ++count;
+    }
+    return count;
+}
+
+const char *INI_GetKey(const SDL_ini *ini, const char *section, int index)
+{
+    if (!ini || index < 0) return NULL;
+    const SDL_ini_section *sec = INI__find_section(ini, INI__section_name(section));
+    if (!sec) return NULL;
+    int count = 0;
+    for (int i = 0; i < sec->item_count; ++i) {
+        if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
+            if (count == index) return sec->items[i].key;
+            ++count;
+        }
+    }
+    return NULL;
+}
+
+const char *INI_GetKeyValue(const SDL_ini *ini, const char *section, int index)
+{
+    if (!ini || index < 0) return NULL;
+    const SDL_ini_section *sec = INI__find_section(ini, INI__section_name(section));
+    if (!sec) return NULL;
+    int count = 0;
+    for (int i = 0; i < sec->item_count; ++i) {
+        if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
+            if (count == index) return sec->items[i].value;
+            ++count;
+        }
+    }
+    return NULL;
 }
 
 #endif /* SDL_INI_IMPLEMENTATION_ONCE */
