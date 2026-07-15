@@ -849,6 +849,51 @@ static int SDLCALL test_dirty_flag(void *arg)
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_line_number_tracking(void *arg)
+{
+    (void)arg;
+
+    // Blank lines before a malformed section should report the correct line.
+    SDL_ini *ini = INI_LoadString(
+        "key = value\n"
+        "\n"
+        "[Bad Section\n");
+    TEST(ini == NULL, "malformed section after blank line fails");
+    if (!ini) {
+        const char *err = SDL_GetError();
+        TEST(SDL_strstr(err, "line 3") != NULL, "error reports line 3 (blank line counted)");
+    }
+
+    // Duplicate keys before a malformed section.
+    ini = INI_LoadString(
+        "[Sec]\n"
+        "key = first\n"
+        "key = second\n"
+        "[Bad\n");
+    TEST(ini == NULL, "malformed section after duplicate keys fails");
+    if (!ini) {
+        const char *err = SDL_GetError();
+        TEST(SDL_strstr(err, "line 4") != NULL, "error reports line 4 (dup key counted)");
+    }
+
+    // Both blank lines and duplicate keys combined.
+    ini = INI_LoadString(
+        "key = value\n"
+        "\n"
+        "[Sec]\n"
+        "key = first\n"
+        "key = second\n"
+        "\n"
+        "[Missing Bracket\n");
+    TEST(ini == NULL, "malformed section after blanks and dups fails");
+    if (!ini) {
+        const char *err = SDL_GetError();
+        TEST(SDL_strstr(err, "line 7") != NULL, "error reports line 7 (all lines counted)");
+    }
+
+    return TEST_COMPLETED;
+}
+
 static int SDLCALL test_loop_utilities(void *arg)
 {
     (void)arg;
@@ -912,6 +957,7 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_crlf,                 "CRLF detection and round-trip"),
     CASE(test_merge,                "Merge INI files"),
     CASE(test_dirty_flag,           "Dirty flag tracking"),
+    CASE(test_line_number_tracking, "Line-number tracking in parser"),
     CASE(test_loop_utilities,       "Index-based loop utilities"),
     NULL
 };

@@ -940,6 +940,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
             item->type = SDL_INI_ITEM_BLANK;
             sec->item_count++;
             line = eol ? eol + 1 : NULL;
+            line_number++;
             continue;
         }
 
@@ -1031,6 +1032,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
                 SDL_free(existing->value);
                 existing->value = new_value;
                 line = eol ? eol + 1 : NULL;
+                line_number++;
                 continue;
             }
 
