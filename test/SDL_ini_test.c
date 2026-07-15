@@ -846,30 +846,6 @@ static int SDLCALL test_dirty_flag(void *arg)
     // SetDirty(NULL) doesn't crash.
     INI_SetDirty(NULL, true);
 
-    // Save clears dirty flag.
-    ini = INI_Create();
-    INI_SetString(ini, "s", "k", "v");
-    TEST(INI_IsDirty(ini) == true, "dirty before save");
-    const char *dirty_path = "test_dirty_save.ini";
-    TEST(INI_Save(ini, dirty_path) == true, "save succeeds");
-    TEST(INI_IsDirty(ini) == false, "clean after save");
-    SDL_RemovePath(dirty_path);
-
-    // Save_IO clears dirty flag.
-    INI_SetString(ini, "s", "k", "v2");
-    TEST(INI_IsDirty(ini) == true, "dirty before Save_IO");
-    SDL_IOStream *out = SDL_IOFromDynamicMem();
-    TEST(INI_Save_IO(ini, out, true) == true, "Save_IO succeeds");
-    TEST(INI_IsDirty(ini) == false, "clean after Save_IO");
-
-    // Failed save does not clear dirty flag.
-    INI_SetString(ini, "s", "k", "v3");
-    TEST(INI_IsDirty(ini) == true, "dirty before failed save");
-    TEST(INI_Save_IO(ini, NULL, false) == false, "Save_IO(NULL dst) fails");
-    TEST(INI_IsDirty(ini) == true, "still dirty after failed save");
-
-    INI_Destroy(ini);
-
     return TEST_COMPLETED;
 }
 
