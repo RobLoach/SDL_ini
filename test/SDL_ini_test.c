@@ -52,21 +52,6 @@ static void SDLCALL collect_key(void *userdata, const SDL_ini *ini, const char *
     c->count++;
 }
 
-/* Save an INI to a freshly allocated, NUL-terminated string (caller frees with
- * SDL_free). Optionally reports the byte count via *size. */
-static char *save_string(SDL_ini *ini, size_t *size)
-{
-    SDL_IOStream *out = SDL_IOFromDynamicMem();
-    if (!out || !INI_Save_IO(ini, out, false)) {
-        if (out) {
-            SDL_CloseIO(out);
-        }
-        return NULL;
-    }
-    SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
-    return (char *)SDL_LoadFile_IO(out, size, true);
-}
-
 static int SDLCALL test_create_destroy(void *arg)
 {
     (void)arg;
@@ -557,12 +542,11 @@ static int SDLCALL test_comment_preservation(void *arg)
         TEST(INI_GetInt(ini, "Audio", "volume", 0) == 85, "volume with comments");
 
         // Save to a string and compare output.
-        size_t outsize = 0;
-        char *output = save_string(ini, &outsize);
+        char *output = INI_SaveString(ini);
         TEST(output != NULL, "read back saved INI");
 
         if (output) {
-            TEST(outsize == SDL_strlen(ini_text), "output size matches");
+            TEST(SDL_strlen(output) == SDL_strlen(ini_text), "output size matches");
             TEST(SDL_strcmp(output, ini_text) == 0, "round-trip preserves comments and blanks");
             if (SDL_strcmp(output, ini_text) != 0) {
                 SDL_Log("  EXPECTED:\n%s", ini_text);
@@ -592,7 +576,7 @@ static int SDLCALL test_comment_types(void *arg)
 
     if (ini) {
         // Save and verify both comment styles are preserved.
-        char *output = save_string(ini, NULL);
+        char *output = INI_SaveString(ini);
         if (output) {
             TEST(SDL_strcmp(output, ini_text) == 0, "both comment styles round-trip");
             SDL_free(output);
@@ -616,7 +600,7 @@ static int SDLCALL test_null_section(void *arg)
     TEST_STR(INI_GetString(ini, "", "key1", "?"), "val1", "empty-string section get (same as NULL)");
 
     // Save and verify global keys appear at top without a header.
-    char *output = save_string(ini, NULL);
+    char *output = INI_SaveString(ini);
     if (output) {
         // Output should start with keys, not a section header.
         TEST(SDL_strncmp(output, "key1 = val1\n", 12) == 0, "global keys at top of file");
@@ -849,6 +833,47 @@ static int SDLCALL test_dirty_flag(void *arg)
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_save_string(void *arg)
+{
+    (void)arg;
+
+    // NULL returns NULL.
+    TEST(INI_SaveString(NULL) == NULL, "INI_SaveString(NULL) returns NULL");
+
+    // Round-trip through SaveString/LoadString.
+    SDL_ini *ini = INI_Create();
+    INI_SetString(ini, NULL, "app", "test");
+    INI_SetString(ini, "Video", "width", "1920");
+    INI_SetInt(ini, "Audio", "volume", 85);
+
+    char *str = INI_SaveString(ini);
+    TEST(str != NULL, "INI_SaveString returns non-NULL");
+    INI_Destroy(ini);
+
+    if (str) {
+        SDL_ini *loaded = INI_LoadString(str);
+        TEST(loaded != NULL, "reload from SaveString");
+        if (loaded) {
+            TEST_STR(INI_GetString(loaded, NULL, "app", "?"), "test", "global key round-trip");
+            TEST_STR(INI_GetString(loaded, "Video", "width", "?"), "1920", "section key round-trip");
+            TEST(INI_GetInt(loaded, "Audio", "volume", 0) == 85, "int value round-trip");
+            INI_Destroy(loaded);
+        }
+        SDL_free(str);
+    }
+
+    // Empty INI produces a valid (possibly empty) string.
+    ini = INI_Create();
+    str = INI_SaveString(ini);
+    TEST(str != NULL, "INI_SaveString on empty INI");
+    if (str) {
+        SDL_free(str);
+    }
+    INI_Destroy(ini);
+
+    return TEST_COMPLETED;
+}
+
 static int SDLCALL test_loop_utilities(void *arg)
 {
     (void)arg;
@@ -912,6 +937,7 @@ static const SDLTest_TestCaseReference *iniTestCases[] = {
     CASE(test_crlf,                 "CRLF detection and round-trip"),
     CASE(test_merge,                "Merge INI files"),
     CASE(test_dirty_flag,           "Dirty flag tracking"),
+    CASE(test_save_string,          "INI_SaveString round-trip"),
     CASE(test_loop_utilities,       "Index-based loop utilities"),
     NULL
 };

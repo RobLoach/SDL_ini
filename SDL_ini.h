@@ -157,6 +157,15 @@ bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio);
 bool INI_Save(SDL_ini *ini, const char *file);
 
 /**
+ * Save an INI object to a newly allocated, NUL-terminated string.
+ *
+ * \param ini the SDL_ini to write.
+ * \returns a NUL-terminated string on success (free with SDL_free), or NULL on failure.
+ * \see INI_LoadString()
+ */
+char *INI_SaveString(const SDL_ini *ini);
+
+/**
  * Free an INI object and all associated memory.
  *
  * \param ini the SDL_ini to destroy. NULL is safely ignored.
@@ -1163,6 +1172,23 @@ bool INI_Save(SDL_ini *ini, const char *file)
         return false;
     }
     return INI_Save_IO(ini, io, true);
+}
+
+char *INI_SaveString(const SDL_ini *ini)
+{
+    if (!ini) {
+        SDL_SetError("INI_SaveString: ini is NULL");
+        return NULL;
+    }
+    SDL_IOStream *out = SDL_IOFromDynamicMem();
+    if (!out || !INI_Save_IO(ini, out, false)) {
+        if (out) {
+            SDL_CloseIO(out);
+        }
+        return NULL;
+    }
+    SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
+    return (char *)SDL_LoadFile_IO(out, NULL, true);
 }
 
 void INI_Destroy(SDL_ini *ini)
