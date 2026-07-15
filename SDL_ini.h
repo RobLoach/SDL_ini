@@ -291,17 +291,6 @@ bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double va
 bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value);
 
 /**
- * Check whether a section exists and contains at least one key.
- *
- * Sections that hold only comments or blank lines are not considered present.
- *
- * \param ini the SDL_ini to query.
- * \param section the section name to check for.
- * \returns true if the section has at least one key, false otherwise.
- * \see INI_HasKey()
- * \see INI_RemoveSection()
- */
-/**
  * Check whether the INI has been modified since creation or last load.
  *
  * \param ini the SDL_ini to query.
@@ -319,6 +308,17 @@ bool INI_IsDirty(const SDL_ini *ini);
  */
 void INI_SetDirty(SDL_ini *ini, bool dirty);
 
+/**
+ * Check whether a section exists and contains at least one key.
+ *
+ * Sections that hold only comments or blank lines are not considered present.
+ *
+ * \param ini the SDL_ini to query.
+ * \param section the section name to check for.
+ * \returns true if the section has at least one key, false otherwise.
+ * \see INI_HasKey()
+ * \see INI_RemoveSection()
+ */
 bool INI_HasSection(const SDL_ini *ini, const char *section);
 
 /**
