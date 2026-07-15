@@ -144,7 +144,7 @@ SDL_ini *INI_LoadString(const char *text);
  * \see INI_Load_IO()
  * \see INI_Save()
  */
-bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio);
+bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio);
 
 /**
  * Save an INI object to a filesystem path.
@@ -154,7 +154,7 @@ bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio);
  * \returns true on success or false on failure; call SDL_GetError() for more information.
  * \see INI_Load()
  */
-bool INI_Save(const SDL_ini *ini, const char *file);
+bool INI_Save(SDL_ini *ini, const char *file);
 
 /**
  * Free an INI object and all associated memory.
@@ -1081,7 +1081,7 @@ SDL_ini *INI_LoadString(const char *text)
     return INI_Load_IO(SDL_IOFromConstMem(text, SDL_strlen(text)), true);
 }
 
-bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio)
+bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio)
 {
     if (!ini || !dst) {
         if (closeio && dst) {
@@ -1152,10 +1152,11 @@ bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio)
             return false;
         }
     }
+    ini->dirty = false;
     return true;
 }
 
-bool INI_Save(const SDL_ini *ini, const char *file)
+bool INI_Save(SDL_ini *ini, const char *file)
 {
     SDL_IOStream *io = SDL_IOFromFile(file, "w");
     if (!io) {
