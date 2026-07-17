@@ -103,7 +103,7 @@ int INI_GetVersion(void);
  * \returns a new SDL_ini on success, or NULL on failure; call SDL_GetError() for more information.
  * \see INI_Destroy()
  */
-SDL_ini *INI_Create(void);
+SDL_ini* INI_Create(void);
 
 /**
  * Load an INI file from an SDL_IOStream.
@@ -114,7 +114,7 @@ SDL_ini *INI_Create(void);
  * \see INI_Save_IO()
  * \see INI_Load()
  */
-SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio);
+SDL_ini* INI_Load_IO(SDL_IOStream* src, bool closeio);
 
 /**
  * Load an INI file from a filesystem path.
@@ -123,7 +123,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio);
  * \returns a new SDL_ini on success, or NULL on failure; call SDL_GetError() for more information.
  * \see INI_Save()
  */
-SDL_ini *INI_Load(const char *file);
+SDL_ini* INI_Load(const char* file);
 
 /**
  * Load an INI from the given string.
@@ -132,7 +132,7 @@ SDL_ini *INI_Load(const char *file);
  * \returns a new SDL_ini on success, or NULL on failure; call SDL_GetError() for more information.
  * \see INI_Load()
  */
-SDL_ini *INI_LoadString(const char *text);
+SDL_ini* INI_LoadString(const char* text);
 
 /**
  * Save an INI object to an SDL_IOStream.
@@ -144,7 +144,7 @@ SDL_ini *INI_LoadString(const char *text);
  * \see INI_Load_IO()
  * \see INI_Save()
  */
-bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio);
+bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio);
 
 /**
  * Save an INI object to a filesystem path.
@@ -154,7 +154,7 @@ bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio);
  * \returns true on success or false on failure; call SDL_GetError() for more information.
  * \see INI_Load()
  */
-bool INI_Save(SDL_ini *ini, const char *file);
+bool INI_Save(SDL_ini* ini, const char* file);
 
 /**
  * Save an INI object to a newly allocated, NUL-terminated string.
@@ -163,7 +163,7 @@ bool INI_Save(SDL_ini *ini, const char *file);
  * \returns a NUL-terminated string on success (free with SDL_free), or NULL on failure.
  * \see INI_LoadString()
  */
-char *INI_SaveString(const SDL_ini *ini);
+char* INI_SaveString(SDL_ini* ini);
 
 /**
  * Free an INI object and all associated memory.
@@ -172,7 +172,7 @@ char *INI_SaveString(const SDL_ini *ini);
  * \see INI_Create()
  * \see INI_Load()
  */
-void INI_Destroy(SDL_ini *ini);
+void INI_Destroy(SDL_ini* ini);
 
 /**
  * Get a string value from the INI.
@@ -183,7 +183,7 @@ void INI_Destroy(SDL_ini *ini);
  * \param default_value returned when the key is not found.
  * \returns the value string, or default_value if not found.
  */
-const char *INI_GetString(const SDL_ini *ini, const char *section, const char *key, const char *default_value);
+const char* INI_GetString(const SDL_ini* ini, const char* section, const char* key, const char* default_value);
 
 /**
  * Get a signed 64-bit integer value from the INI.
@@ -195,7 +195,7 @@ const char *INI_GetString(const SDL_ini *ini, const char *section, const char *k
  * \returns the parsed value, or default_value if not found.
  * \see INI_GetString()
  */
-Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint64 default_value);
+Sint64 INI_GetInt(const SDL_ini* ini, const char* section, const char* key, Sint64 default_value);
 
 /**
  * Get a floating-point value from the INI.
@@ -207,7 +207,7 @@ Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint
  * \returns the parsed value, or default_value if not found.
  * \see INI_GetString()
  */
-float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value);
+float INI_GetFloat(const SDL_ini* ini, const char* section, const char* key, float default_value);
 
 /**
  * Get a double-precision floating-point value from the INI.
@@ -219,7 +219,7 @@ float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, flo
  * \returns the parsed value, or default_value if not found.
  * \see INI_GetString()
  */
-double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, double default_value);
+double INI_GetDouble(const SDL_ini* ini, const char* section, const char* key, double default_value);
 
 /**
  * Get a boolean value from the INI.
@@ -234,7 +234,7 @@ double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, d
  * \returns the parsed value, or default_value if not found.
  * \see INI_GetString()
  */
-bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value);
+bool INI_GetBoolean(const SDL_ini* ini, const char* section, const char* key, bool default_value);
 
 /**
  * Set a string value in the INI.
@@ -247,7 +247,7 @@ bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bo
  * \param value the string value. Providing NULL will set an empty string.
  * \returns true on success or false on failure.
  */
-bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const char *value);
+bool INI_SetString(SDL_ini* ini, const char* section, const char* key, const char* value);
 
 /**
  * Set a signed 64-bit integer value in the INI.
@@ -259,7 +259,7 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
  * \returns true on success or false on failure.
  * \see INI_SetString()
  */
-bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value);
+bool INI_SetInt(SDL_ini* ini, const char* section, const char* key, Sint64 value);
 
 /**
  * Set a single-precision floating-point value in the INI.
@@ -271,7 +271,7 @@ bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value
  * \returns true on success or false on failure.
  * \see INI_SetString()
  */
-bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value);
+bool INI_SetFloat(SDL_ini* ini, const char* section, const char* key, float value);
 
 /**
  * Set a double-precision floating-point value in the INI.
@@ -283,7 +283,7 @@ bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float valu
  * \returns true on success or false on failure.
  * \see INI_SetString()
  */
-bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double value);
+bool INI_SetDouble(SDL_ini* ini, const char* section, const char* key, double value);
 
 /**
  * Set a boolean value in the INI.
@@ -297,7 +297,7 @@ bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double va
  * \returns true on success or false on failure.
  * \see INI_SetString()
  */
-bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value);
+bool INI_SetBoolean(SDL_ini* ini, const char* section, const char* key, bool value);
 
 /**
  * Check whether the INI has been modified since creation or last load.
@@ -306,7 +306,7 @@ bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool val
  * \returns true if any key has been set, removed, or a section removed.
  * \see INI_SetDirty()
  */
-bool INI_IsDirty(const SDL_ini *ini);
+bool INI_IsDirty(const SDL_ini* ini);
 
 /**
  * Manually set or clear the dirty flag.
@@ -315,7 +315,7 @@ bool INI_IsDirty(const SDL_ini *ini);
  * \param dirty the new dirty state.
  * \see INI_IsDirty()
  */
-void INI_SetDirty(SDL_ini *ini, bool dirty);
+void INI_SetDirty(SDL_ini* ini, bool dirty);
 
 /**
  * Check whether a section exists and contains at least one key.
@@ -328,7 +328,7 @@ void INI_SetDirty(SDL_ini *ini, bool dirty);
  * \see INI_HasKey()
  * \see INI_RemoveSection()
  */
-bool INI_HasSection(const SDL_ini *ini, const char *section);
+bool INI_HasSection(const SDL_ini* ini, const char* section);
 
 /**
  * Check whether a key exists in a section.
@@ -346,7 +346,7 @@ bool INI_HasSection(const SDL_ini *ini, const char *section);
  * \see INI_RemoveKey()
  * \see INI_HasValue()
  */
-bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key);
+bool INI_HasKey(const SDL_ini* ini, const char* section, const char* key);
 
 /**
  * Check whether a key exists and has a non-empty value.
@@ -360,7 +360,7 @@ bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key);
  * \returns true if the key exists and its value is non-empty, false otherwise.
  * \see INI_HasKey()
  */
-bool INI_HasValue(const SDL_ini *ini, const char *section, const char *key);
+bool INI_HasValue(const SDL_ini* ini, const char* section, const char* key);
 
 /**
  * Delete a key from a section.
@@ -371,7 +371,7 @@ bool INI_HasValue(const SDL_ini *ini, const char *section, const char *key);
  * \returns true if the key was found and removed, false otherwise.
  * \see INI_RemoveSection()
  */
-bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key);
+bool INI_RemoveKey(SDL_ini* ini, const char* section, const char* key);
 
 /**
  * Delete an entire section and all its keys.
@@ -381,7 +381,7 @@ bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key);
  * \returns true if the section was found and removed, false otherwise.
  * \see INI_RemoveKey()
  */
-bool INI_RemoveSection(SDL_ini *ini, const char *section);
+bool INI_RemoveSection(SDL_ini* ini, const char* section);
 
 /**
  * Callback invoked for each section name during enumeration.
@@ -389,7 +389,7 @@ bool INI_RemoveSection(SDL_ini *ini, const char *section);
  * \param userdata user-provided pointer.
  * \param section the section name (empty string for the global section).
  */
-typedef void (SDLCALL *INI_EnumerateSectionsCallback)(void *userdata, const SDL_ini *ini, const char *section);
+typedef void(SDLCALL* INI_EnumerateSectionsCallback)(void* userdata, const SDL_ini* ini, const char* section);
 
 /**
  * Callback invoked for each key/value pair during enumeration.
@@ -398,7 +398,7 @@ typedef void (SDLCALL *INI_EnumerateSectionsCallback)(void *userdata, const SDL_
  * \param key the key name.
  * \param value the associated value.
  */
-typedef void (SDLCALL *INI_EnumerateKeysCallback)(void *userdata, const SDL_ini *ini, const char* section, const char *key, const char *value);
+typedef void(SDLCALL* INI_EnumerateKeysCallback)(void* userdata, const SDL_ini* ini, const char* section, const char* key, const char* value);
 
 /**
  * Enumerate all sections in the INI.
@@ -407,7 +407,7 @@ typedef void (SDLCALL *INI_EnumerateKeysCallback)(void *userdata, const SDL_ini 
  * \param callback called once per section.
  * \param userdata passed through to the callback.
  */
-void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback callback, void *userdata);
+void INI_EnumerateSections(const SDL_ini* ini, INI_EnumerateSectionsCallback callback, void* userdata);
 
 /**
  * Enumerate all key/value pairs in a section.
@@ -417,7 +417,7 @@ void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback cal
  * \param callback called once per key.
  * \param userdata passed through to the callback.
  */
-void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata);
+void INI_EnumerateKeys(const SDL_ini* ini, const char* section, INI_EnumerateKeysCallback callback, void* userdata);
 
 /**
  * Merge all sections and keys from src into dest.
@@ -431,7 +431,7 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
  * \see INI_Merge_IO()
  * \see INI_MergeFile()
  */
-bool INI_Merge(SDL_ini *dest, const SDL_ini *src);
+bool INI_Merge(SDL_ini* dest, const SDL_ini* src);
 
 /**
  * Load an INI from an SDL_IOStream and merge it into dest.
@@ -442,7 +442,7 @@ bool INI_Merge(SDL_ini *dest, const SDL_ini *src);
  * \returns true on success or false on failure.
  * \see INI_Merge()
  */
-bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio);
+bool INI_Merge_IO(SDL_ini* dest, SDL_IOStream* src, bool closeio);
 
 /**
  * Load an INI from a file and merge it into dest.
@@ -452,7 +452,7 @@ bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio);
  * \returns true on success or false on failure.
  * \see INI_Merge()
  */
-bool INI_MergeFile(SDL_ini *dest, const char *file);
+bool INI_MergeFile(SDL_ini* dest, const char* file);
 
 /**
  * Load multiple INI files, merging them in order.
@@ -463,7 +463,7 @@ bool INI_MergeFile(SDL_ini *dest, const char *file);
  * \returns a new SDL_ini on success, or NULL on failure.
  * \see INI_Merge()
  */
-SDL_ini *INI_LoadMultiple(const char **files);
+SDL_ini* INI_LoadMultiple(const char** files);
 
 /**
  * Return the number of sections in the INI.
@@ -471,7 +471,7 @@ SDL_ini *INI_LoadMultiple(const char **files);
  * \param ini the SDL_ini to query.
  * \returns the section count, or 0 if ini is NULL.
  */
-int INI_GetSectionCount(const SDL_ini *ini);
+int INI_GetSectionCount(const SDL_ini* ini);
 
 /**
  * Return the name of the section at the given index.
@@ -480,7 +480,7 @@ int INI_GetSectionCount(const SDL_ini *ini);
  * \param index zero-based section index.
  * \returns the section name, or NULL if out of range.
  */
-const char *INI_GetSection(const SDL_ini *ini, int index);
+const char* INI_GetSection(const SDL_ini* ini, int index);
 
 /**
  * Return the number of key/value entries in a section (comments and blank
@@ -490,7 +490,7 @@ const char *INI_GetSection(const SDL_ini *ini, int index);
  * \param section section name (NULL or "" for the global section).
  * \returns the key count, or 0 if the section does not exist.
  */
-int INI_GetKeyCount(const SDL_ini *ini, const char *section);
+int INI_GetKeyCount(const SDL_ini* ini, const char* section);
 
 /**
  * Return the key name at the given index within a section.
@@ -500,7 +500,7 @@ int INI_GetKeyCount(const SDL_ini *ini, const char *section);
  * \param index zero-based index among key/value entries only.
  * \returns the key name, or NULL if out of range.
  */
-const char *INI_GetKey(const SDL_ini *ini, const char *section, int index);
+const char* INI_GetKey(const SDL_ini* ini, const char* section, int index);
 
 /**
  * Return the value at the given key index within a section.
@@ -510,7 +510,7 @@ const char *INI_GetKey(const SDL_ini *ini, const char *section, int index);
  * \param index zero-based index among key/value entries only.
  * \returns the value string, or NULL if out of range.
  */
-const char *INI_GetKeyValue(const SDL_ini *ini, const char *section, int index);
+const char* INI_GetKeyValue(const SDL_ini* ini, const char* section, int index);
 
 #ifdef __DOXYGEN
 /**
@@ -564,9 +564,9 @@ typedef enum SDL_ini_item_type {
  */
 typedef struct SDL_ini_item {
     SDL_ini_item_type type;
-    char *key; /* When the entry is a SDL_INI_ITEM_ENTRY, includes the key. */
-    char *value; /* When the entry is a SDL_INI_ITEM_ENTRY, provides the value. */
-    char *comment; /* When the entry is a SDL_INI_ITEM_COMMENT, this includes the full text, including ; or # prefix. */
+    char* key; /* When the entry is a SDL_INI_ITEM_ENTRY, includes the key. */
+    char* value; /* When the entry is a SDL_INI_ITEM_ENTRY, provides the value. */
+    char* comment; /* When the entry is a SDL_INI_ITEM_COMMENT, this includes the full text, including ; or # prefix. */
 } SDL_ini_item;
 
 /**
@@ -575,8 +575,8 @@ typedef struct SDL_ini_item {
  * \internal
  */
 typedef struct SDL_ini_section {
-    char *name; /** Empty string for the global section. */
-    SDL_ini_item *items; /** The array of items that are held within this section. */
+    char* name; /** Empty string for the global section. */
+    SDL_ini_item* items; /** The array of items that are held within this section. */
     int item_count; /** The number of items. */
     int item_capacity; /** The maximum capacity of the items array. */
 } SDL_ini_section;
@@ -587,7 +587,7 @@ typedef struct SDL_ini_section {
  * \see INI_Destroy()
  */
 struct SDL_ini {
-    SDL_ini_section *sections;
+    SDL_ini_section* sections;
     int section_count;
     int section_capacity;
     bool crlf;
@@ -599,8 +599,7 @@ struct SDL_ini {
  *
  * \internal
  */
-static const char *INI__section_name(const char *section)
-{
+static const char* INI__section_name(const char* section) {
     return section ? section : "";
 }
 
@@ -611,15 +610,14 @@ static const char *INI__section_name(const char *section)
  *
  * \internal
  */
-static char *INI__trim(char *s)
-{
+static char* INI__trim(char* s) {
     while (*s == ' ' || *s == '\t' || *s == '\r' || *s == '\n') {
         ++s;
     }
     if (*s == '\0') {
         return s;
     }
-    char *end = s + SDL_strlen(s) - 1;
+    char* end = s + SDL_strlen(s) - 1;
     while (end > s && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n')) {
         --end;
     }
@@ -634,21 +632,21 @@ static char *INI__trim(char *s)
  *
  * \internal
  */
-static void INI__unescape(char *s)
-{
-    char *d = s;
-    for (char *p = s; *p; ++p) {
+static void INI__unescape(char* s) {
+    char* d = s;
+    for (char* p = s; *p; ++p) {
         if (*p == '\\' && p[1] != '\0') {
             ++p;
             switch (*p) {
-            case 'n':  *d++ = '\n'; break;
-            case 'r':  *d++ = '\r'; break;
-            case 't':  *d++ = '\t'; break;
-            case '\\': *d++ = '\\'; break;
-            case '"':  *d++ = '"';  break;
-            default:   *d++ = *p;   break;  // unknown escape: keep literal
+                case 'n': *d++ = '\n'; break;
+                case 'r': *d++ = '\r'; break;
+                case 't': *d++ = '\t'; break;
+                case '\\': *d++ = '\\'; break;
+                case '"': *d++ = '"'; break;
+                default: *d++ = *p; break; // unknown escape: keep literal
             }
-        } else {
+        }
+        else {
             *d++ = *p;
         }
     }
@@ -664,12 +662,11 @@ static void INI__unescape(char *s)
  *
  * \internal
  */
-static char *INI__unquote(char *s)
-{
+static char* INI__unquote(char* s) {
     size_t len = SDL_strlen(s);
     if (len >= 2 && s[0] == '"' && s[len - 1] == '"') {
         s[len - 1] = '\0';
-        char *inner = s + 1;
+        char* inner = s + 1;
         INI__unescape(inner);
         return inner;
     }
@@ -685,31 +682,51 @@ static char *INI__unquote(char *s)
  *
  * \internal
  */
-static char *INI__escape(const char *s)
-{
+static char* INI__escape(const char* s) {
     size_t needed = 1;
-    for (const char *p = s; *p; ++p) {
+    for (const char* p = s; *p; ++p) {
         switch (*p) {
-        case '\\': case '"': case '\n': case '\r': case '\t':
-            needed += 2; break;
-        default:
-            needed += 1; break;
+            case '\\':
+            case '"':
+            case '\n':
+            case '\r':
+            case '\t':
+                needed += 2;
+                break;
+            default:
+                needed += 1;
+                break;
         }
     }
-    char *out = (char *)SDL_malloc(needed);
+    char* out = (char*)SDL_malloc(needed);
     if (!out) {
         SDL_OutOfMemory();
         return NULL;
     }
-    char *d = out;
-    for (const char *p = s; *p; ++p) {
+    char* d = out;
+    for (const char* p = s; *p; ++p) {
         switch (*p) {
-        case '\\': *d++ = '\\'; *d++ = '\\'; break;
-        case '"':  *d++ = '\\'; *d++ = '"';  break;
-        case '\n': *d++ = '\\'; *d++ = 'n';  break;
-        case '\r': *d++ = '\\'; *d++ = 'r';  break;
-        case '\t': *d++ = '\\'; *d++ = 't';  break;
-        default:   *d++ = *p; break;
+            case '\\':
+                *d++ = '\\';
+                *d++ = '\\';
+                break;
+            case '"':
+                *d++ = '\\';
+                *d++ = '"';
+                break;
+            case '\n':
+                *d++ = '\\';
+                *d++ = 'n';
+                break;
+            case '\r':
+                *d++ = '\\';
+                *d++ = 'r';
+                break;
+            case '\t':
+                *d++ = '\\';
+                *d++ = 't';
+                break;
+            default: *d++ = *p; break;
         }
     }
     *d = '\0';
@@ -726,8 +743,7 @@ static char *INI__escape(const char *s)
  *
  * \internal
  */
-static bool INI__needs_quoting(const char *s)
-{
+static bool INI__needs_quoting(const char* s) {
     if (s[0] == '\0') {
         return true;
     }
@@ -738,7 +754,7 @@ static bool INI__needs_quoting(const char *s)
     if (s[len - 1] == ' ' || s[len - 1] == '\t') {
         return true;
     }
-    for (const char *p = s; *p; ++p) {
+    for (const char* p = s; *p; ++p) {
         if (*p == '"' || *p == '\\' ||
             *p == '\n' || *p == '\r' || *p == '\t') {
             return true;
@@ -754,8 +770,7 @@ static bool INI__needs_quoting(const char *s)
  *
  * \internal
  */
-static SDL_ini_section *INI__find_section(const SDL_ini *ini, const char *name)
-{
+static SDL_ini_section* INI__find_section(const SDL_ini* ini, const char* name) {
     name = INI__section_name(name);
     for (int i = 0; i < ini->section_count; ++i) {
         if (SDL_strcasecmp(ini->sections[i].name, name) == 0) {
@@ -770,8 +785,7 @@ static SDL_ini_section *INI__find_section(const SDL_ini *ini, const char *name)
  *
  * \internal
  */
-static SDL_ini_item *INI__find_entry(const SDL_ini_section *sec, const char *key)
-{
+static SDL_ini_item* INI__find_entry(const SDL_ini_section* sec, const char* key) {
     for (int i = 0; i < sec->item_count; ++i) {
         if (sec->items[i].type == SDL_INI_ITEM_ENTRY &&
             SDL_strcasecmp(sec->items[i].key, key) == 0) {
@@ -788,14 +802,14 @@ static SDL_ini_item *INI__find_entry(const SDL_ini_section *sec, const char *key
  *
  * \internal
  */
-static bool INI__grow_sections(SDL_ini *ini)
-{
+static bool INI__grow_sections(SDL_ini* ini) {
     if (ini->section_count < ini->section_capacity) {
         return true;
     }
     int new_cap = ini->section_capacity ? ini->section_capacity * 2 : 4;
-    SDL_ini_section *tmp = (SDL_ini_section *)SDL_realloc(
-        ini->sections, (size_t)new_cap * sizeof(*tmp));
+    SDL_ini_section* tmp = (SDL_ini_section*)SDL_realloc(
+        ini->sections,
+        (size_t)new_cap * sizeof(*tmp));
     if (!tmp) {
         return SDL_OutOfMemory();
     }
@@ -811,14 +825,14 @@ static bool INI__grow_sections(SDL_ini *ini)
  *
  * \internal
  */
-static bool INI__grow_items(SDL_ini_section *sec)
-{
+static bool INI__grow_items(SDL_ini_section* sec) {
     if (sec->item_count < sec->item_capacity) {
         return true;
     }
     int new_cap = sec->item_capacity ? sec->item_capacity * 2 : 8;
-    SDL_ini_item *tmp = (SDL_ini_item *)SDL_realloc(
-        sec->items, (size_t)new_cap * sizeof(*tmp));
+    SDL_ini_item* tmp = (SDL_ini_item*)SDL_realloc(
+        sec->items,
+        (size_t)new_cap * sizeof(*tmp));
     if (!tmp) {
         return SDL_OutOfMemory();
     }
@@ -834,10 +848,9 @@ static bool INI__grow_items(SDL_ini_section *sec)
  *
  * \internal
  */
-static SDL_ini_section *INI__get_or_create_section(SDL_ini *ini, const char *name)
-{
+static SDL_ini_section* INI__get_or_create_section(SDL_ini* ini, const char* name) {
     name = INI__section_name(name);
-    SDL_ini_section *sec = INI__find_section(ini, name);
+    SDL_ini_section* sec = INI__find_section(ini, name);
     if (sec) {
         return sec;
     }
@@ -860,13 +873,13 @@ static SDL_ini_section *INI__get_or_create_section(SDL_ini *ini, const char *nam
  *
  * \internal
  */
-static void INI__free_section_contents(SDL_ini_section *sec)
-{
+static void INI__free_section_contents(SDL_ini_section* sec) {
     for (int i = 0; i < sec->item_count; ++i) {
         if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
             SDL_free(sec->items[i].key);
             SDL_free(sec->items[i].value);
-        } else if (sec->items[i].type == SDL_INI_ITEM_COMMENT) {
+        }
+        else if (sec->items[i].type == SDL_INI_ITEM_COMMENT) {
             SDL_free(sec->items[i].comment);
         }
         // BLANK items have no allocated memory.
@@ -875,34 +888,31 @@ static void INI__free_section_contents(SDL_ini_section *sec)
     SDL_free(sec->name);
 }
 
-int INI_GetVersion(void)
-{
+int INI_GetVersion(void) {
     return SDL_INI_VERSION;
 }
 
-SDL_ini *INI_Create(void)
-{
-    SDL_ini *ini = (SDL_ini *)SDL_calloc(1, sizeof(*ini));
+SDL_ini* INI_Create(void) {
+    SDL_ini* ini = (SDL_ini*)SDL_calloc(1, sizeof(*ini));
     if (!ini) {
         SDL_OutOfMemory();
     }
     return ini;
 }
 
-SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
-{
+SDL_ini* INI_Load_IO(SDL_IOStream* src, bool closeio) {
     if (!src) {
         SDL_SetError("INI_Load_IO: src is NULL");
         return NULL;
     }
 
     size_t datasize = 0;
-    char *data = (char *)SDL_LoadFile_IO(src, &datasize, closeio);
+    char* data = (char*)SDL_LoadFile_IO(src, &datasize, closeio);
     if (!data) {
-        return NULL;  // SDL_GetError() already set
+        return NULL; // SDL_GetError() already set
     }
 
-    SDL_ini *ini = INI_Create();
+    SDL_ini* ini = INI_Create();
     if (!ini) {
         SDL_free(data);
         return NULL;
@@ -917,22 +927,22 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
     }
 
     // Current section name (empty = global).
-    const char *cur_section = "";
+    const char* cur_section = "";
     int line_number = 1;
 
-    char *line = data;
+    char* line = data;
     while (line && *line) {
         // End of Line
-        char *eol = SDL_strchr(line, '\n');
+        char* eol = SDL_strchr(line, '\n');
         if (eol) {
             *eol = '\0';
         }
 
-        char *trimmed = INI__trim(line);
+        char* trimmed = INI__trim(line);
 
         // Blank Line
         if (*trimmed == '\0') {
-            SDL_ini_section *sec = INI__get_or_create_section(ini, cur_section);
+            SDL_ini_section* sec = INI__get_or_create_section(ini, cur_section);
             if (!sec) {
                 INI_Destroy(ini);
                 SDL_free(data);
@@ -944,7 +954,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
                 SDL_free(data);
                 return NULL;
             }
-            SDL_ini_item *item = &sec->items[sec->item_count];
+            SDL_ini_item* item = &sec->items[sec->item_count];
             SDL_memset(item, 0, sizeof(*item));
             item->type = SDL_INI_ITEM_BLANK;
             sec->item_count++;
@@ -955,7 +965,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
 
         // Comment
         if (*trimmed == '#' || *trimmed == ';') {
-            SDL_ini_section *sec = INI__get_or_create_section(ini, cur_section);
+            SDL_ini_section* sec = INI__get_or_create_section(ini, cur_section);
             if (!sec) {
                 INI_Destroy(ini);
                 SDL_free(data);
@@ -967,7 +977,7 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
                 SDL_free(data);
                 return NULL;
             }
-            SDL_ini_item *item = &sec->items[sec->item_count];
+            SDL_ini_item* item = &sec->items[sec->item_count];
             SDL_memset(item, 0, sizeof(*item));
             item->type = SDL_INI_ITEM_COMMENT;
             item->comment = SDL_strdup(trimmed);
@@ -985,20 +995,21 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
 
         // Section
         if (*trimmed == '[') {
-            char *close = SDL_strchr(trimmed, ']');
+            char* close = SDL_strchr(trimmed, ']');
             if (close) {
                 *close = '\0';
-                char *sec_name = INI__trim(trimmed + 1);
+                char* sec_name = INI__trim(trimmed + 1);
 
                 // Ensure section exists.
-                SDL_ini_section *sec = INI__get_or_create_section(ini, sec_name);
+                SDL_ini_section* sec = INI__get_or_create_section(ini, sec_name);
                 if (!sec) {
                     INI_Destroy(ini);
                     SDL_free(data);
                     return NULL;
                 }
-                cur_section = sec->name;  // point at the owned copy
-            } else {
+                cur_section = sec->name; // point at the owned copy
+            }
+            else {
                 SDL_SetError("INI parse error on line %d: missing closing bracket for section", line_number);
                 INI_Destroy(ini);
                 SDL_free(data);
@@ -1010,14 +1021,14 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
         }
 
         // Key Value
-        char *eq = SDL_strchr(trimmed, '=');
+        char* eq = SDL_strchr(trimmed, '=');
         if (eq) {
             *eq = '\0';
-            char *key   = INI__trim(trimmed);
-            char *value = INI__unquote(INI__trim(eq + 1));
+            char* key = INI__trim(trimmed);
+            char* value = INI__unquote(INI__trim(eq + 1));
 
             // Make sure the current section exists.
-            SDL_ini_section *sec = INI__get_or_create_section(ini, cur_section);
+            SDL_ini_section* sec = INI__get_or_create_section(ini, cur_section);
             if (!sec) {
                 INI_Destroy(ini);
                 SDL_free(data);
@@ -1029,9 +1040,9 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
 
             // Duplicate key in the same section: overwrite the existing value
             // instead of appending a second entry (matches set-path semantics).
-            SDL_ini_item *existing = INI__find_entry(sec, key);
+            SDL_ini_item* existing = INI__find_entry(sec, key);
             if (existing) {
-                char *new_value = SDL_strdup(value);
+                char* new_value = SDL_strdup(value);
                 if (!new_value) {
                     SDL_OutOfMemory();
                     INI_Destroy(ini);
@@ -1051,10 +1062,10 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
                 return NULL;
             }
 
-            SDL_ini_item *item = &sec->items[sec->item_count];
+            SDL_ini_item* item = &sec->items[sec->item_count];
             SDL_memset(item, 0, sizeof(*item));
-            item->type  = SDL_INI_ITEM_ENTRY;
-            item->key   = SDL_strdup(key);
+            item->type = SDL_INI_ITEM_ENTRY;
+            item->key = SDL_strdup(key);
             item->value = SDL_strdup(value);
             if (!item->key || !item->value) {
                 SDL_free(item->key);
@@ -1076,22 +1087,19 @@ SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio)
     return ini;
 }
 
-SDL_ini *INI_Load(const char *file)
-{
-    SDL_IOStream *io = SDL_IOFromFile(file, "r");
+SDL_ini* INI_Load(const char* file) {
+    SDL_IOStream* io = SDL_IOFromFile(file, "r");
     if (!io) {
         return NULL;
     }
     return INI_Load_IO(io, true);
 }
 
-SDL_ini *INI_LoadString(const char *text)
-{
+SDL_ini* INI_LoadString(const char* text) {
     return INI_Load_IO(SDL_IOFromConstMem(text, SDL_strlen(text)), true);
 }
 
-bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio)
-{
+bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio) {
     if (!ini || !dst) {
         if (closeio && dst) {
             SDL_CloseIO(dst);
@@ -1099,12 +1107,12 @@ bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio)
         return SDL_SetError("INI_Save_IO: invalid arguments");
     }
 
-    const char *eol = ini->crlf ? "\r\n" : "\n";
+    const char* eol = ini->crlf ? "\r\n" : "\n";
     bool wrote_any = false;
     bool last_was_blank = false;
 
     for (int s = 0; s < ini->section_count; ++s) {
-        const SDL_ini_section *sec = &ini->sections[s];
+        const SDL_ini_section* sec = &ini->sections[s];
         bool is_global = (sec->name[0] == '\0');
 
         // Skip empty global section entirely.
@@ -1123,34 +1131,35 @@ bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio)
         }
 
         for (int i = 0; i < sec->item_count; ++i) {
-            const SDL_ini_item *item = &sec->items[i];
+            const SDL_ini_item* item = &sec->items[i];
             switch (item->type) {
-            case SDL_INI_ITEM_ENTRY: {
-                const char *val = item->value;
-                if (INI__needs_quoting(val)) {
-                    char *esc = INI__escape(val);
-                    if (!esc) {
-                        if (closeio) {
-                            SDL_CloseIO(dst);
+                case SDL_INI_ITEM_ENTRY: {
+                    const char* val = item->value;
+                    if (INI__needs_quoting(val)) {
+                        char* esc = INI__escape(val);
+                        if (!esc) {
+                            if (closeio) {
+                                SDL_CloseIO(dst);
+                            }
+                            return false; // SDL_OutOfMemory() already set
                         }
-                        return false; // SDL_OutOfMemory() already set
+                        SDL_IOprintf(dst, "%s = \"%s\"%s", item->key, esc, eol);
+                        SDL_free(esc);
                     }
-                    SDL_IOprintf(dst, "%s = \"%s\"%s", item->key, esc, eol);
-                    SDL_free(esc);
-                } else {
-                    SDL_IOprintf(dst, "%s = %s%s", item->key, val, eol);
+                    else {
+                        SDL_IOprintf(dst, "%s = %s%s", item->key, val, eol);
+                    }
+                    last_was_blank = false;
+                    break;
                 }
-                last_was_blank = false;
-                break;
-            }
-            case SDL_INI_ITEM_COMMENT:
-                SDL_IOprintf(dst, "%s%s", item->comment, eol);
-                last_was_blank = false;
-                break;
-            case SDL_INI_ITEM_BLANK:
-                SDL_IOprintf(dst, "%s", eol);
-                last_was_blank = true;
-                break;
+                case SDL_INI_ITEM_COMMENT:
+                    SDL_IOprintf(dst, "%s%s", item->comment, eol);
+                    last_was_blank = false;
+                    break;
+                case SDL_INI_ITEM_BLANK:
+                    SDL_IOprintf(dst, "%s", eol);
+                    last_was_blank = true;
+                    break;
             }
             wrote_any = true;
         }
@@ -1165,22 +1174,20 @@ bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio)
     return true;
 }
 
-bool INI_Save(SDL_ini *ini, const char *file)
-{
-    SDL_IOStream *io = SDL_IOFromFile(file, "w");
+bool INI_Save(SDL_ini* ini, const char* file) {
+    SDL_IOStream* io = SDL_IOFromFile(file, "w");
     if (!io) {
         return false;
     }
     return INI_Save_IO(ini, io, true);
 }
 
-char *INI_SaveString(const SDL_ini *ini)
-{
+char* INI_SaveString(SDL_ini* ini) {
     if (!ini) {
         SDL_SetError("INI_SaveString: ini is NULL");
         return NULL;
     }
-    SDL_IOStream *out = SDL_IOFromDynamicMem();
+    SDL_IOStream* out = SDL_IOFromDynamicMem();
     if (!out || !INI_Save_IO(ini, out, false)) {
         if (out) {
             SDL_CloseIO(out);
@@ -1188,11 +1195,10 @@ char *INI_SaveString(const SDL_ini *ini)
         return NULL;
     }
     SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
-    return (char *)SDL_LoadFile_IO(out, NULL, true);
+    return (char*)SDL_LoadFile_IO(out, NULL, true);
 }
 
-void INI_Destroy(SDL_ini *ini)
-{
+void INI_Destroy(SDL_ini* ini) {
     if (!ini) {
         return;
     }
@@ -1203,28 +1209,26 @@ void INI_Destroy(SDL_ini *ini)
     SDL_free(ini);
 }
 
-const char *INI_GetString(const SDL_ini *ini, const char *section, const char *key, const char *default_value)
-{
+const char* INI_GetString(const SDL_ini* ini, const char* section, const char* key, const char* default_value) {
     if (!ini || !key) {
         return default_value;
     }
-    const SDL_ini_section *sec = INI__find_section(ini, section);
+    const SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
         return default_value;
     }
-    const SDL_ini_item *item = INI__find_entry(sec, key);
+    const SDL_ini_item* item = INI__find_entry(sec, key);
     if (!item) {
         return default_value;
     }
     return item->value;
 }
 
-bool INI_HasSection(const SDL_ini *ini, const char *section)
-{
+bool INI_HasSection(const SDL_ini* ini, const char* section) {
     if (!ini) {
         return false;
     }
-    const SDL_ini_section *sec = INI__find_section(ini, section);
+    const SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
         return false;
     }
@@ -1238,55 +1242,50 @@ bool INI_HasSection(const SDL_ini *ini, const char *section)
     return false;
 }
 
-bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key)
-{
+bool INI_HasKey(const SDL_ini* ini, const char* section, const char* key) {
     if (!ini || !key) {
         return false;
     }
-    const SDL_ini_section *sec = INI__find_section(ini, section);
+    const SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
         return false;
     }
     return INI__find_entry(sec, key) != NULL;
 }
 
-bool INI_HasValue(const SDL_ini *ini, const char *section, const char *key)
-{
+bool INI_HasValue(const SDL_ini* ini, const char* section, const char* key) {
     if (!ini || !key) {
         return false;
     }
-    const SDL_ini_section *sec = INI__find_section(ini, section);
+    const SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
         return false;
     }
-    const SDL_ini_item *item = INI__find_entry(sec, key);
+    const SDL_ini_item* item = INI__find_entry(sec, key);
     return item != NULL && item->value && item->value[0] != '\0';
 }
 
-bool INI_IsDirty(const SDL_ini *ini)
-{
+bool INI_IsDirty(const SDL_ini* ini) {
     if (!ini) {
         return false;
     }
     return ini->dirty;
 }
 
-void INI_SetDirty(SDL_ini *ini, bool dirty)
-{
+void INI_SetDirty(SDL_ini* ini, bool dirty) {
     if (ini) {
         ini->dirty = dirty;
     }
 }
 
-Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint64 default_value)
-{
-    const char *str = INI_GetString(ini, section, key, NULL);
+Sint64 INI_GetInt(const SDL_ini* ini, const char* section, const char* key, Sint64 default_value) {
+    const char* str = INI_GetString(ini, section, key, NULL);
     if (!str) {
         return default_value;
     }
     // Detect a 0x/0X prefix for hex; otherwise parse base 10 so a leading
     // zero ("010") is decimal 10, not octal 8.
-    const char *p = str;
+    const char* p = str;
     while (*p == ' ' || *p == '\t') {
         ++p;
     }
@@ -1294,21 +1293,20 @@ Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint
         ++p;
     }
     int base = (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) ? 16 : 10;
-    char *endp = NULL;
+    char* endp = NULL;
     Sint64 val = SDL_strtoll(str, &endp, base);
     if (endp == str) {
-        return default_value;  // no digits parsed
+        return default_value; // no digits parsed
     }
     return val;
 }
 
-double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, double default_value)
-{
-    const char *str = INI_GetString(ini, section, key, NULL);
+double INI_GetDouble(const SDL_ini* ini, const char* section, const char* key, double default_value) {
+    const char* str = INI_GetString(ini, section, key, NULL);
     if (!str) {
         return default_value;
     }
-    char *endp = NULL;
+    char* endp = NULL;
     double val = SDL_strtod(str, &endp);
     if (endp == str) {
         return default_value;
@@ -1316,14 +1314,12 @@ double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, d
     return val;
 }
 
-float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value)
-{
+float INI_GetFloat(const SDL_ini* ini, const char* section, const char* key, float default_value) {
     return (float)INI_GetDouble(ini, section, key, (double)default_value);
 }
 
-bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value)
-{
-    const char *str = INI_GetString(ini, section, key, NULL);
+bool INI_GetBoolean(const SDL_ini* ini, const char* section, const char* key, bool default_value) {
+    const char* str = INI_GetString(ini, section, key, NULL);
     if (!str) {
         return default_value;
     }
@@ -1335,8 +1331,7 @@ bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bo
         SDL_strcasecmp(str, "on") == 0 ||
         SDL_strcasecmp(str, "enabled") == 0 ||
         SDL_strcasecmp(str, "enable") == 0 ||
-        SDL_strcasecmp(str, "active") == 0)
-    {
+        SDL_strcasecmp(str, "active") == 0) {
         return true;
     }
 
@@ -1349,15 +1344,13 @@ bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bo
         SDL_strcasecmp(str, "disabled") == 0 ||
         SDL_strcasecmp(str, "disable") == 0 ||
         SDL_strcasecmp(str, "inactive") == 0 ||
-        SDL_strcasecmp(str, "none") == 0)
-    {
+        SDL_strcasecmp(str, "none") == 0) {
         return false;
     }
     return default_value;
 }
 
-bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const char *value)
-{
+bool INI_SetString(SDL_ini* ini, const char* section, const char* key, const char* value) {
     if (!ini || !key) {
         return SDL_SetError("INI_SetString: invalid arguments");
     }
@@ -1365,16 +1358,16 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
         value = "";
     }
 
-    const char *sec_name = INI__section_name(section);
-    SDL_ini_section *sec = INI__get_or_create_section(ini, sec_name);
+    const char* sec_name = INI__section_name(section);
+    SDL_ini_section* sec = INI__get_or_create_section(ini, sec_name);
     if (!sec) {
         return false;
     }
 
     // Update existing key if it exists.
-    SDL_ini_item *item = INI__find_entry(sec, key);
+    SDL_ini_item* item = INI__find_entry(sec, key);
     if (item) {
-        char *new_value = SDL_strdup(value);
+        char* new_value = SDL_strdup(value);
         if (!new_value) {
             return SDL_OutOfMemory();
         }
@@ -1390,8 +1383,8 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
     }
     item = &sec->items[sec->item_count];
     SDL_memset(item, 0, sizeof(*item));
-    item->type  = SDL_INI_ITEM_ENTRY;
-    item->key   = SDL_strdup(key);
+    item->type = SDL_INI_ITEM_ENTRY;
+    item->key = SDL_strdup(key);
     item->value = SDL_strdup(value);
     if (!item->key || !item->value) {
         SDL_free(item->key);
@@ -1403,38 +1396,33 @@ bool INI_SetString(SDL_ini *ini, const char *section, const char *key, const cha
     return true;
 }
 
-bool INI_SetInt(SDL_ini *ini, const char *section, const char *key, Sint64 value)
-{
+bool INI_SetInt(SDL_ini* ini, const char* section, const char* key, Sint64 value) {
     char buf[24];
     SDL_snprintf(buf, sizeof(buf), "%" SDL_PRIs64, value);
     return INI_SetString(ini, section, key, buf);
 }
 
-bool INI_SetDouble(SDL_ini *ini, const char *section, const char *key, double value)
-{
+bool INI_SetDouble(SDL_ini* ini, const char* section, const char* key, double value) {
     char buf[32];
     SDL_snprintf(buf, sizeof(buf), "%.17g", value);
     return INI_SetString(ini, section, key, buf);
 }
 
-bool INI_SetFloat(SDL_ini *ini, const char *section, const char *key, float value)
-{
+bool INI_SetFloat(SDL_ini* ini, const char* section, const char* key, float value) {
     char buf[24];
     SDL_snprintf(buf, sizeof(buf), "%.8g", (double)value);
     return INI_SetString(ini, section, key, buf);
 }
 
-bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool value)
-{
+bool INI_SetBoolean(SDL_ini* ini, const char* section, const char* key, bool value) {
     return INI_SetString(ini, section, key, value ? "true" : "false");
 }
 
-bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key)
-{
+bool INI_RemoveKey(SDL_ini* ini, const char* section, const char* key) {
     if (!ini || !key) {
         return false;
     }
-    SDL_ini_section *sec = INI__find_section(ini, section);
+    SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
         return false;
     }
@@ -1453,17 +1441,15 @@ bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key)
     return false;
 }
 
-bool INI_RemoveSection(SDL_ini *ini, const char *section)
-{
+bool INI_RemoveSection(SDL_ini* ini, const char* section) {
     if (!ini) {
         return false;
     }
-    const char *sec_name = INI__section_name(section);
+    const char* sec_name = INI__section_name(section);
     for (int i = 0; i < ini->section_count; ++i) {
         if (SDL_strcasecmp(ini->sections[i].name, sec_name) == 0) {
             INI__free_section_contents(&ini->sections[i]);
-            SDL_memmove(&ini->sections[i], &ini->sections[i + 1],
-                        (size_t)(ini->section_count - 1 - i) * sizeof(ini->sections[0]));
+            SDL_memmove(&ini->sections[i], &ini->sections[i + 1], (size_t)(ini->section_count - 1 - i) * sizeof(ini->sections[0]));
             ini->section_count--;
             ini->dirty = true;
             return true;
@@ -1472,8 +1458,7 @@ bool INI_RemoveSection(SDL_ini *ini, const char *section)
     return false;
 }
 
-void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback callback, void *userdata)
-{
+void INI_EnumerateSections(const SDL_ini* ini, INI_EnumerateSectionsCallback callback, void* userdata) {
     if (!ini || !callback) {
         return;
     }
@@ -1482,12 +1467,11 @@ void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback cal
     }
 }
 
-void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata)
-{
+void INI_EnumerateKeys(const SDL_ini* ini, const char* section, INI_EnumerateKeysCallback callback, void* userdata) {
     if (!ini || !callback) {
         return;
     }
-    const SDL_ini_section *sec = INI__find_section(ini, section);
+    const SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
         return;
     }
@@ -1498,13 +1482,12 @@ void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKey
     }
 }
 
-bool INI_Merge(SDL_ini *dest, const SDL_ini *src)
-{
+bool INI_Merge(SDL_ini* dest, const SDL_ini* src) {
     if (!dest || !src) {
         return SDL_SetError("INI_Merge: invalid arguments");
     }
     for (int s = 0; s < src->section_count; ++s) {
-        const SDL_ini_section *sec = &src->sections[s];
+        const SDL_ini_section* sec = &src->sections[s];
         for (int i = 0; i < sec->item_count; ++i) {
             if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
                 if (!INI_SetString(dest, sec->name, sec->items[i].key, sec->items[i].value)) {
@@ -1516,9 +1499,8 @@ bool INI_Merge(SDL_ini *dest, const SDL_ini *src)
     return true;
 }
 
-bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio)
-{
-    SDL_ini *tmp = INI_Load_IO(src, closeio);
+bool INI_Merge_IO(SDL_ini* dest, SDL_IOStream* src, bool closeio) {
+    SDL_ini* tmp = INI_Load_IO(src, closeio);
     if (!tmp) {
         return false;
     }
@@ -1527,9 +1509,8 @@ bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio)
     return ok;
 }
 
-bool INI_MergeFile(SDL_ini *dest, const char *file)
-{
-    SDL_ini *tmp = INI_Load(file);
+bool INI_MergeFile(SDL_ini* dest, const char* file) {
+    SDL_ini* tmp = INI_Load(file);
     if (!tmp) {
         return false;
     }
@@ -1538,13 +1519,12 @@ bool INI_MergeFile(SDL_ini *dest, const char *file)
     return ok;
 }
 
-SDL_ini *INI_LoadMultiple(const char **files)
-{
+SDL_ini* INI_LoadMultiple(const char** files) {
     if (!files) {
         SDL_SetError("INI_LoadMultiple: files is NULL");
         return NULL;
     }
-    SDL_ini *ini = INI_Create();
+    SDL_ini* ini = INI_Create();
     if (!ini) {
         return NULL;
     }
@@ -1557,22 +1537,19 @@ SDL_ini *INI_LoadMultiple(const char **files)
     return ini;
 }
 
-int INI_GetSectionCount(const SDL_ini *ini)
-{
+int INI_GetSectionCount(const SDL_ini* ini) {
     if (!ini) return 0;
     return ini->section_count;
 }
 
-const char *INI_GetSection(const SDL_ini *ini, int index)
-{
+const char* INI_GetSection(const SDL_ini* ini, int index) {
     if (!ini || index < 0 || index >= ini->section_count) return NULL;
     return ini->sections[index].name;
 }
 
-int INI_GetKeyCount(const SDL_ini *ini, const char *section)
-{
+int INI_GetKeyCount(const SDL_ini* ini, const char* section) {
     if (!ini) return 0;
-    const SDL_ini_section *sec = INI__find_section(ini, INI__section_name(section));
+    const SDL_ini_section* sec = INI__find_section(ini, INI__section_name(section));
     if (!sec) return 0;
     int count = 0;
     for (int i = 0; i < sec->item_count; ++i) {
@@ -1581,10 +1558,9 @@ int INI_GetKeyCount(const SDL_ini *ini, const char *section)
     return count;
 }
 
-const char *INI_GetKey(const SDL_ini *ini, const char *section, int index)
-{
+const char* INI_GetKey(const SDL_ini* ini, const char* section, int index) {
     if (!ini || index < 0) return NULL;
-    const SDL_ini_section *sec = INI__find_section(ini, INI__section_name(section));
+    const SDL_ini_section* sec = INI__find_section(ini, INI__section_name(section));
     if (!sec) return NULL;
     int count = 0;
     for (int i = 0; i < sec->item_count; ++i) {
@@ -1596,10 +1572,9 @@ const char *INI_GetKey(const SDL_ini *ini, const char *section, int index)
     return NULL;
 }
 
-const char *INI_GetKeyValue(const SDL_ini *ini, const char *section, int index)
-{
+const char* INI_GetKeyValue(const SDL_ini* ini, const char* section, int index) {
     if (!ini || index < 0) return NULL;
-    const SDL_ini_section *sec = INI__find_section(ini, INI__section_name(section));
+    const SDL_ini_section* sec = INI__find_section(ini, INI__section_name(section));
     if (!sec) return NULL;
     int count = 0;
     for (int i = 0; i < sec->item_count; ++i) {
