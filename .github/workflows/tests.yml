@@ -18,16 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup SDL
-        id: sdl
-        uses: libsdl-org/setup-sdl@a966470e7d9b6a5c93eec3f08d5dac370325c860
-        with:
-          version: 3.4.12
-          sdl-test: true
-          build-type: Release
-          install-linux-dependencies: true
-          cmake-arguments: -DSDL_STATIC=ON -DSDL_SHARED=OFF
-
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
