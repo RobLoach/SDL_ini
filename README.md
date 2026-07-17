@@ -162,6 +162,12 @@ cc test/SDL_ini_test.c -o SDL_ini_test $(pkg-config --cflags --libs sdl3)
 doxygen .Doxyfile
 ```
 
+### Coding Standards
+
+```bash
+clang-format -i SDL_ini.h test/SDL_ini_test.c
+```
+
 ## License
 
 [zlib](LICENSE)
