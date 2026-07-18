@@ -76,13 +76,20 @@ volume = 0.85
 ## API Reference
 
 ```c
-// SDL_ini
+// Version
+
+int INI_GetVersion(void);
+
+// Lifecycle
 
 SDL_ini *INI_Create(void);
 SDL_ini *INI_Load_IO(SDL_IOStream *src, bool closeio);
 SDL_ini *INI_Load(const char *file);
-bool INI_Save_IO(const SDL_ini *ini, SDL_IOStream *dst, bool closeio);
-bool INI_Save(const SDL_ini *ini, const char *file);
+SDL_ini *INI_LoadString(const char *text);
+SDL_ini *INI_LoadMultiple(const char **files);
+bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio);
+bool INI_Save(SDL_ini *ini, const char *file);
+char *INI_SaveString(SDL_ini *ini);
 void INI_Destroy(SDL_ini *ini);
 
 // Get
@@ -92,9 +99,14 @@ Sint64 INI_GetInt(const SDL_ini *ini, const char *section, const char *key, Sint
 float INI_GetFloat(const SDL_ini *ini, const char *section, const char *key, float default_value);
 double INI_GetDouble(const SDL_ini *ini, const char *section, const char *key, double default_value);
 bool INI_GetBoolean(const SDL_ini *ini, const char *section, const char *key, bool default_value);
+
+// Query
+
 bool INI_HasSection(const SDL_ini *ini, const char *section);
 bool INI_HasKey(const SDL_ini *ini, const char *section, const char *key);
 bool INI_HasValue(const SDL_ini *ini, const char *section, const char *key);
+bool INI_IsDirty(const SDL_ini *ini);
+void INI_SetDirty(SDL_ini *ini, bool dirty);
 
 // Set
 
@@ -106,12 +118,26 @@ bool INI_SetBoolean(SDL_ini *ini, const char *section, const char *key, bool val
 bool INI_RemoveKey(SDL_ini *ini, const char *section, const char *key);
 bool INI_RemoveSection(SDL_ini *ini, const char *section);
 
+// Merge
+
+bool INI_Merge(SDL_ini *dest, const SDL_ini *src);
+bool INI_Merge_IO(SDL_ini *dest, SDL_IOStream *src, bool closeio);
+bool INI_MergeFile(SDL_ini *dest, const char *file);
+
 // Enumerate
 
 typedef void (SDLCALL *INI_EnumerateSectionsCallback)(void *userdata, const SDL_ini *ini, const char *section);
-typedef void (SDLCALL *INI_EnumerateKeysCallback)(void *userdata, const SDL_ini *ini, const char* section, const char *key,  const char *value);
+typedef void (SDLCALL *INI_EnumerateKeysCallback)(void *userdata, const SDL_ini *ini, const char *section, const char *key, const char *value);
 void INI_EnumerateSections(const SDL_ini *ini, INI_EnumerateSectionsCallback callback, void *userdata);
 void INI_EnumerateKeys(const SDL_ini *ini, const char *section, INI_EnumerateKeysCallback callback, void *userdata);
+
+// Index-based iteration
+
+int INI_GetSectionCount(const SDL_ini *ini);
+const char *INI_GetSection(const SDL_ini *ini, int index);
+int INI_GetKeyCount(const SDL_ini *ini, const char *section);
+const char *INI_GetKey(const SDL_ini *ini, const char *section, int index);
+const char *INI_GetKeyValue(const SDL_ini *ini, const char *section, int index);
 ```
 
 ## INI File Format
