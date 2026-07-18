@@ -882,6 +882,67 @@ static int SDLCALL test_loop_utilities(void* arg) {
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_clone(void* arg) {
+    (void)arg;
+
+    // NULL returns NULL.
+    TEST(INI_Clone(NULL) == NULL, "INI_Clone(NULL) returns NULL");
+
+    // Build an INI with comments, blanks, multiple sections, and CRLF.
+    SDL_ini* ini = INI_LoadString(
+        "; header\r\n"
+        "app = test\r\n"
+        "\r\n"
+        "[Video]\r\n"
+        "width = 1920\r\n"
+        "height = 1080\r\n");
+    TEST(ini != NULL, "load source INI for clone");
+    INI_SetDirty(ini, true);
+
+    SDL_ini* clone = INI_Clone(ini);
+    TEST(clone != NULL, "INI_Clone returns non-NULL");
+
+    if (clone) {
+        // All keys/values match.
+        TEST_STR(INI_GetString(clone, NULL, "app", "?"), "test", "clone global key");
+        TEST_STR(INI_GetString(clone, "Video", "width", "?"), "1920", "clone width");
+        TEST_STR(INI_GetString(clone, "Video", "height", "?"), "1080", "clone height");
+
+        // Dirty flag starts false.
+        TEST(INI_IsDirty(clone) == false, "clone dirty flag is false");
+
+        // CRLF flag preserved.
+        char* str = INI_SaveString(clone);
+        TEST(str != NULL, "clone SaveString");
+        if (str) {
+            TEST(SDL_strstr(str, "\r\n") != NULL, "clone preserves CRLF");
+            SDL_free(str);
+        }
+
+        // Independence: modify clone, original unchanged.
+        INI_SetString(clone, "Video", "width", "2560");
+        TEST_STR(INI_GetString(ini, "Video", "width", "?"), "1920", "original unchanged after clone modified");
+        TEST_STR(INI_GetString(clone, "Video", "width", "?"), "2560", "clone has new value");
+
+        // Comments preserved via round-trip comparison.
+        char* orig_str = INI_SaveString(ini);
+        // Reset clone to match original for comparison.
+        INI_Destroy(clone);
+        clone = INI_Clone(ini);
+        char* clone_str = INI_SaveString(clone);
+        if (orig_str && clone_str) {
+            TEST(SDL_strcmp(orig_str, clone_str) == 0, "clone serializes identically");
+        }
+        SDL_free(orig_str);
+        SDL_free(clone_str);
+
+        INI_Destroy(clone);
+    }
+
+    INI_Destroy(ini);
+    return TEST_COMPLETED;
+}
+
 #define CASE(fn, desc)                   \
     &(const SDLTest_TestCaseReference) { \
         fn, #fn, desc, TEST_ENABLED      \
@@ -913,6 +974,7 @@ static const SDLTest_TestCaseReference* iniTestCases[] = {
     CASE(test_dirty_flag, "Dirty flag tracking"),
     CASE(test_save_string, "INI_SaveString round-trip"),
     CASE(test_loop_utilities, "Index-based loop utilities"),
+    CASE(test_clone, "INI_Clone deep copy"),
     NULL};
 
 static SDLTest_TestSuiteReference iniSuite = {
