@@ -1096,6 +1096,10 @@ SDL_ini* INI_Load(const char* file) {
 }
 
 SDL_ini* INI_LoadString(const char* text) {
+    if (!text) {
+        SDL_SetError("INI_LoadString: text is NULL");
+        return NULL;
+    }
     return INI_Load_IO(SDL_IOFromConstMem(text, SDL_strlen(text)), true);
 }
 

@@ -311,6 +311,7 @@ static int SDLCALL test_save_and_load(void* arg) {
 
 static int SDLCALL test_parse_edge_cases(void* arg) {
     (void)arg;
+    TEST(INI_LoadString(NULL) == NULL, "LoadString(NULL) returns NULL");
     // Build an INI string with tricky formatting.
     SDL_ini* ini = INI_LoadString(
         "  ; This is a comment  \n"
