@@ -1187,13 +1187,16 @@ char* INI_SaveString(SDL_ini* ini) {
         SDL_SetError("INI_SaveString: ini is NULL");
         return NULL;
     }
+    bool was_dirty = ini->dirty;
     SDL_IOStream* out = SDL_IOFromDynamicMem();
     if (!out || !INI_Save_IO(ini, out, false)) {
         if (out) {
             SDL_CloseIO(out);
         }
+        ini->dirty = was_dirty;
         return NULL;
     }
+    ini->dirty = was_dirty;
     SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
     return (char*)SDL_LoadFile_IO(out, NULL, true);
 }
