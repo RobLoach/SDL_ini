@@ -843,6 +843,21 @@ static int SDLCALL test_save_string(void* arg) {
     }
     INI_Destroy(ini);
 
+    // SaveString does not clear the dirty flag.
+    ini = INI_Create();
+    INI_SetString(ini, "S", "k", "v");
+    TEST(INI_IsDirty(ini) == true, "dirty before SaveString");
+    str = INI_SaveString(ini);
+    TEST(str != NULL, "SaveString succeeds");
+    TEST(INI_IsDirty(ini) == true, "dirty preserved after SaveString");
+    SDL_free(str);
+
+    // Save to file still clears dirty.
+    TEST(INI_Save(ini, "test_dirty_save.ini") == true, "Save to file");
+    TEST(INI_IsDirty(ini) == false, "dirty cleared after Save");
+    SDL_RemovePath("test_dirty_save.ini");
+    INI_Destroy(ini);
+
     return TEST_COMPLETED;
 }
 
