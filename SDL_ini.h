@@ -166,6 +166,18 @@ bool INI_Save(SDL_ini* ini, const char* file);
 char* INI_SaveString(SDL_ini* ini);
 
 /**
+ * Create an independent deep copy of an INI object.
+ *
+ * All sections, keys, values, comments, and blank lines are duplicated.
+ * The clone starts with a clean dirty flag.
+ *
+ * \param ini the SDL_ini to clone.
+ * \returns a new SDL_ini on success, or NULL on failure; call SDL_GetError() for more information.
+ * \see INI_Create()
+ */
+SDL_ini* INI_Clone(const SDL_ini* ini);
+
+/**
  * Free an INI object and all associated memory.
  *
  * \param ini the SDL_ini to destroy. NULL is safely ignored.
@@ -1203,6 +1215,29 @@ char* INI_SaveString(SDL_ini* ini) {
     ini->dirty = was_dirty;
     SDL_SeekIO(out, 0, SDL_IO_SEEK_SET);
     return (char*)SDL_LoadFile_IO(out, NULL, true);
+}
+
+SDL_ini* INI_Clone(const SDL_ini* ini) {
+    if (!ini) {
+        SDL_SetError("INI_Clone: ini is NULL");
+        return NULL;
+    }
+
+    // Serialize to string, then parse back to get an independent deep copy.
+    // The const cast is safe: INI_SaveString only mutates the dirty flag.
+    bool saved_dirty = ini->dirty;
+    char* text = INI_SaveString((SDL_ini*)ini);
+    ((SDL_ini*)ini)->dirty = saved_dirty;
+    if (!text) {
+        return NULL;
+    }
+
+    SDL_ini* clone = INI_LoadString(text);
+    SDL_free(text);
+    if (clone) {
+        clone->dirty = false;
+    }
+    return clone;
 }
 
 void INI_Destroy(SDL_ini* ini) {
