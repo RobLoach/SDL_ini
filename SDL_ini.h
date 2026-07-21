@@ -1215,54 +1215,20 @@ SDL_ini* INI_Clone(const SDL_ini* ini) {
         SDL_SetError("INI_Clone: ini is NULL");
         return NULL;
     }
-    SDL_ini* clone = (SDL_ini*)SDL_calloc(1, sizeof(*clone));
-    if (!clone) {
-        SDL_OutOfMemory();
+
+    // Serialize to string, then parse back to get an independent deep copy.
+    // The const cast is safe: INI_SaveString only mutates the dirty flag.
+    bool saved_dirty = ini->dirty;
+    char* text = INI_SaveString((SDL_ini*)ini);
+    ((SDL_ini*)ini)->dirty = saved_dirty;
+    if (!text) {
         return NULL;
     }
-    clone->crlf = ini->crlf;
-    clone->dirty = false;
-    for (int s = 0; s < ini->section_count; ++s) {
-        const SDL_ini_section* src_sec = &ini->sections[s];
-        SDL_ini_section* dst_sec = INI__get_or_create_section(clone, src_sec->name);
-        if (!dst_sec) {
-            INI_Destroy(clone);
-            return NULL;
-        }
-        for (int i = 0; i < src_sec->item_count; ++i) {
-            if (!INI__grow_items(dst_sec)) {
-                INI_Destroy(clone);
-                return NULL;
-            }
-            const SDL_ini_item* src_item = &src_sec->items[i];
-            SDL_ini_item* dst_item = &dst_sec->items[dst_sec->item_count];
-            SDL_memset(dst_item, 0, sizeof(*dst_item));
-            dst_item->type = src_item->type;
-            switch (src_item->type) {
-                case SDL_INI_ITEM_ENTRY:
-                    dst_item->key = SDL_strdup(src_item->key);
-                    dst_item->value = SDL_strdup(src_item->value);
-                    if (!dst_item->key || !dst_item->value) {
-                        SDL_free(dst_item->key);
-                        SDL_free(dst_item->value);
-                        SDL_OutOfMemory();
-                        INI_Destroy(clone);
-                        return NULL;
-                    }
-                    break;
-                case SDL_INI_ITEM_COMMENT:
-                    dst_item->comment = SDL_strdup(src_item->comment);
-                    if (!dst_item->comment) {
-                        SDL_OutOfMemory();
-                        INI_Destroy(clone);
-                        return NULL;
-                    }
-                    break;
-                case SDL_INI_ITEM_BLANK:
-                    break;
-            }
-            dst_sec->item_count++;
-        }
+
+    SDL_ini* clone = INI_LoadString(text);
+    SDL_free(text);
+    if (clone) {
+        clone->dirty = false;
     }
     return clone;
 }
