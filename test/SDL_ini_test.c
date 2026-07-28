@@ -944,6 +944,90 @@ static int SDLCALL test_clone(void* arg) {
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_invalid_names(void* arg) {
+    (void)arg;
+    SDL_ini* ini = INI_Create();
+
+    // Keys that would reparse as other INI syntax are rejected.
+    TEST(INI_SetString(ini, "s", "[x]", "1") == false, "key starting with '[' rejected");
+    TEST(INI_SetString(ini, "s", ";note", "1") == false, "key starting with ';' rejected");
+    TEST(INI_SetString(ini, "s", "#note", "1") == false, "key starting with '#' rejected");
+    TEST(INI_SetString(ini, "s", "a=b", "1") == false, "key containing '=' rejected");
+    TEST(INI_SetString(ini, "s", "a\nb", "1") == false, "key containing newline rejected");
+    TEST(INI_SetString(ini, "s", "a\rb", "1") == false, "key containing carriage return rejected");
+
+    // Keys with leading/trailing whitespace cannot round-trip (parser trims).
+    TEST(INI_SetString(ini, "s", " key", "1") == false, "key with leading space rejected");
+    TEST(INI_SetString(ini, "s", "key ", "1") == false, "key with trailing space rejected");
+    TEST(INI_SetString(ini, "s", "\tkey", "1") == false, "key with leading tab rejected");
+
+    // Section names that would break the header line are rejected.
+    TEST(INI_SetString(ini, "a]b", "key", "1") == false, "section containing ']' rejected");
+    TEST(INI_SetString(ini, "a\nb", "key", "1") == false, "section containing newline rejected");
+    TEST(INI_SetString(ini, " sec", "key", "1") == false, "section with leading space rejected");
+    TEST(INI_SetString(ini, "sec ", "key", "1") == false, "section with trailing space rejected");
+
+    // The typed setters route through the same validation.
+    TEST(INI_SetInt(ini, "s", "[x]", 1) == false, "SetInt rejects invalid key");
+    TEST(INI_SetFloat(ini, "s", "a=b", 1.0f) == false, "SetFloat rejects invalid key");
+    TEST(INI_SetDouble(ini, "a]b", "key", 1.0) == false, "SetDouble rejects invalid section");
+    TEST(INI_SetBoolean(ini, "s", ";note", true) == false, "SetBoolean rejects invalid key");
+
+    // Nothing was created by the failed calls.
+    TEST(INI_HasSection(ini, "s") == false, "rejected set did not create section");
+    TEST(INI_HasSection(ini, "a]b") == false, "rejected section name was not created");
+    TEST(INI_GetSectionCount(ini) == 0, "no sections created by rejected sets");
+
+    // Names that merely contain (not start with) comment chars, or contain
+    // '[' / interior whitespace, are fine.
+    TEST(INI_SetString(ini, "s", "a;b", "1") == true, "key with interior ';' accepted");
+    TEST(INI_SetString(ini, "s", "a#b", "2") == true, "key with interior '#' accepted");
+    TEST(INI_SetString(ini, "s", "a[b]", "3") == true, "key with interior '[' accepted");
+    TEST(INI_SetString(ini, "s", "my key", "4") == true, "key with interior space accepted");
+    TEST(INI_SetString(ini, "a[b", "key", "5") == true, "section containing '[' accepted");
+    TEST(INI_SetString(ini, "a;b", "key", "6") == true, "section containing ';' accepted");
+
+    // The valid names above round-trip through SaveString/LoadString.
+    char* str = INI_SaveString(ini);
+    TEST(str != NULL, "SaveString with valid unusual names");
+    INI_Destroy(ini);
+    if (str) {
+        SDL_ini* loaded = INI_LoadString(str);
+        TEST(loaded != NULL, "reload valid unusual names");
+        if (loaded) {
+            TEST_STR(INI_GetString(loaded, "s", "a;b", "?"), "1", "interior ';' key round-trip");
+            TEST_STR(INI_GetString(loaded, "s", "a#b", "?"), "2", "interior '#' key round-trip");
+            TEST_STR(INI_GetString(loaded, "s", "a[b]", "?"), "3", "interior '[' key round-trip");
+            TEST_STR(INI_GetString(loaded, "s", "my key", "?"), "4", "interior space key round-trip");
+            TEST_STR(INI_GetString(loaded, "a[b", "key", "?"), "5", "section with '[' round-trip");
+            TEST_STR(INI_GetString(loaded, "a;b", "key", "?"), "6", "section with ';' round-trip");
+            INI_Destroy(loaded);
+        }
+        SDL_free(str);
+    }
+
+    // Issue #50 repro: the malicious key is rejected, so reloading the saved
+    // document does not conjure a bogus "x" section.
+    ini = INI_Create();
+    TEST(INI_SetString(ini, "safe", "[x]", "boom") == false, "issue #50 key rejected");
+    INI_SetString(ini, "safe", "ok", "yes");
+    str = INI_SaveString(ini);
+    TEST(str != NULL, "SaveString after rejected set");
+    INI_Destroy(ini);
+    if (str) {
+        SDL_ini* loaded = INI_LoadString(str);
+        TEST(loaded != NULL, "reload after rejected set");
+        if (loaded) {
+            TEST(INI_HasSection(loaded, "x") == false, "no phantom section after reload");
+            TEST_STR(INI_GetString(loaded, "safe", "ok", "?"), "yes", "valid key survives round-trip");
+            INI_Destroy(loaded);
+        }
+        SDL_free(str);
+    }
+
+    return TEST_COMPLETED;
+}
+
 #define CASE(fn, desc)                   \
     &(const SDLTest_TestCaseReference) { \
         fn, #fn, desc, TEST_ENABLED      \
@@ -976,6 +1060,7 @@ static const SDLTest_TestCaseReference* iniTestCases[] = {
     CASE(test_save_string, "INI_SaveString round-trip"),
     CASE(test_loop_utilities, "Index-based loop utilities"),
     CASE(test_clone, "INI_Clone deep copy"),
+    CASE(test_invalid_names, "Reject unsafe key/section names"),
     NULL};
 
 static SDLTest_TestSuiteReference iniSuite = {
