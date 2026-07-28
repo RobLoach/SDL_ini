@@ -253,11 +253,22 @@ bool INI_GetBoolean(const SDL_ini* ini, const char* section, const char* key, bo
  *
  * The section is created if it does not exist.
  *
+ * Names are validated so that the document can round-trip through
+ * INI_Save() and INI_Load(). The call fails, with SDL_GetError() set, when:
+ *
+ * - the key begins with '[', ';' or '#'
+ * - the key contains '='
+ * - the key or section name contains a newline or carriage return
+ * - the section name contains ']'
+ * - the key or section name has leading or trailing whitespace (the parser
+ *   trims names, so such names could never be read back)
+ *
  * \param ini the SDL_ini to modify.
  * \param section section name (NULL or "" for the global section).
  * \param key the key to set.
  * \param value the string value. Providing NULL will set an empty string.
- * \returns true on success or false on failure.
+ * \returns true on success or false on failure; call SDL_GetError() for
+ *          more information.
  */
 bool INI_SetString(SDL_ini* ini, const char* section, const char* key, const char* value);
 
@@ -613,6 +624,53 @@ struct SDL_ini {
  */
 static const char* INI__section_name(const char* section) {
     return section ? section : "";
+}
+
+/**
+ * Check whether a section name can round-trip through save and load.
+ *
+ * \returns true if the section name is safe to serialize.
+ *
+ * \internal
+ */
+static bool INI__valid_section_name(const char* name) {
+    for (const char* p = name; *p; ++p) {
+        if (*p == ']' || *p == '\n' || *p == '\r') {
+            return false;
+        }
+    }
+    if (name[0] == ' ' || name[0] == '\t') {
+        return false;
+    }
+    size_t len = SDL_strlen(name);
+    if (len > 0 && (name[len - 1] == ' ' || name[len - 1] == '\t')) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Check whether a key name can round-trip through save and load.
+ *
+ * \returns true if the key is safe to serialize.
+ *
+ * \internal
+ */
+static bool INI__valid_key(const char* key) {
+    if (key[0] == '[' || key[0] == ';' || key[0] == '#' ||
+        key[0] == ' ' || key[0] == '\t') {
+        return false;
+    }
+    for (const char* p = key; *p; ++p) {
+        if (*p == '=' || *p == '\n' || *p == '\r') {
+            return false;
+        }
+    }
+    size_t len = SDL_strlen(key);
+    if (len > 0 && (key[len - 1] == ' ' || key[len - 1] == '\t')) {
+        return false;
+    }
+    return true;
 }
 
 /**
@@ -1401,6 +1459,12 @@ bool INI_SetString(SDL_ini* ini, const char* section, const char* key, const cha
     }
 
     const char* sec_name = INI__section_name(section);
+    if (!INI__valid_section_name(sec_name)) {
+        return SDL_SetError("INI_SetString: section name contains INI syntax characters or padding whitespace");
+    }
+    if (!INI__valid_key(key)) {
+        return SDL_SetError("INI_SetString: key contains INI syntax characters or padding whitespace");
+    }
     SDL_ini_section* sec = INI__get_or_create_section(ini, sec_name);
     if (!sec) {
         return false;
