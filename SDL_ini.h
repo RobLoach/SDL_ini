@@ -263,9 +263,6 @@ bool INI_GetBoolean(const SDL_ini* ini, const char* section, const char* key, bo
  * - the key or section name has leading or trailing whitespace (the parser
  *   trims names, so such names could never be read back)
  *
- * This validation applies to every INI_Set* function, as they all route
- * through INI_SetString().
- *
  * \param ini the SDL_ini to modify.
  * \param section section name (NULL or "" for the global section).
  * \param key the key to set.
@@ -632,10 +629,6 @@ static const char* INI__section_name(const char* section) {
 /**
  * Check whether a section name can round-trip through save and load.
  *
- * Rejects names containing ']' (would truncate the header), newlines or
- * carriage returns (would break the line structure), and names with leading
- * or trailing whitespace (the parser trims, so they cannot round-trip).
- *
  * \returns true if the section name is safe to serialize.
  *
  * \internal
@@ -658,12 +651,6 @@ static bool INI__valid_section_name(const char* name) {
 
 /**
  * Check whether a key name can round-trip through save and load.
- *
- * Rejects keys beginning with '[' (would reparse as a section header), ';'
- * or '#' (would reparse as a comment), keys containing '=' (would split at
- * the wrong place), newlines or carriage returns (would break the line
- * structure), and keys with leading or trailing whitespace (the parser
- * trims, so they cannot round-trip).
  *
  * \returns true if the key is safe to serialize.
  *
