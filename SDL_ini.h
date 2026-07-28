@@ -70,7 +70,7 @@ typedef struct SDL_ini SDL_ini;
  * \see SDL_INI_VERSION
  * \see SDL_INI_VERSION_ATLEAST
  */
-#define SDL_INI_MINOR_VERSION 1
+#define SDL_INI_MINOR_VERSION 2
 
 /**
  * The micro/patch version of SDL_ini.
