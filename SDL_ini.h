@@ -1185,57 +1185,68 @@ bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio) {
     bool wrote_any = false;
     bool last_was_blank = false;
 
-    for (int s = 0; s < ini->section_count; ++s) {
-        const SDL_ini_section* sec = &ini->sections[s];
-        bool is_global = (sec->name[0] == '\0');
+    // Two passes: write the global section (empty name) first regardless of
+    // its position in the array, then the named sections in their original
+    // relative order. Global keys written after a [Section] header would be
+    // reassigned to that section on reload.
+    for (int pass = 0; pass < 2; ++pass) {
+        for (int s = 0; s < ini->section_count; ++s) {
+            const SDL_ini_section* sec = &ini->sections[s];
+            bool is_global = (sec->name[0] == '\0');
 
-        // Skip empty global section entirely.
-        if (is_global && sec->item_count == 0) {
-            continue;
-        }
-
-        if (!is_global) {
-            // Add a blank line separator before section headers when needed.
-            if (wrote_any && !last_was_blank) {
-                SDL_IOprintf(dst, "%s", eol);
+            // Pass 0 writes only the global section; pass 1 only named ones.
+            if (is_global != (pass == 0)) {
+                continue;
             }
-            SDL_IOprintf(dst, "[%s]%s", sec->name, eol);
-            last_was_blank = false;
-            wrote_any = true;
-        }
 
-        for (int i = 0; i < sec->item_count; ++i) {
-            const SDL_ini_item* item = &sec->items[i];
-            switch (item->type) {
-                case SDL_INI_ITEM_ENTRY: {
-                    const char* val = item->value;
-                    if (INI__needs_quoting(val)) {
-                        char* esc = INI__escape(val);
-                        if (!esc) {
-                            if (closeio) {
-                                SDL_CloseIO(dst);
-                            }
-                            return false; // SDL_OutOfMemory() already set
-                        }
-                        SDL_IOprintf(dst, "%s = \"%s\"%s", item->key, esc, eol);
-                        SDL_free(esc);
-                    }
-                    else {
-                        SDL_IOprintf(dst, "%s = %s%s", item->key, val, eol);
-                    }
-                    last_was_blank = false;
-                    break;
-                }
-                case SDL_INI_ITEM_COMMENT:
-                    SDL_IOprintf(dst, "%s%s", item->comment, eol);
-                    last_was_blank = false;
-                    break;
-                case SDL_INI_ITEM_BLANK:
+            // Skip empty global section entirely.
+            if (is_global && sec->item_count == 0) {
+                continue;
+            }
+
+            if (!is_global) {
+                // Add a blank line separator before section headers when needed.
+                if (wrote_any && !last_was_blank) {
                     SDL_IOprintf(dst, "%s", eol);
-                    last_was_blank = true;
-                    break;
+                }
+                SDL_IOprintf(dst, "[%s]%s", sec->name, eol);
+                last_was_blank = false;
+                wrote_any = true;
             }
-            wrote_any = true;
+
+            for (int i = 0; i < sec->item_count; ++i) {
+                const SDL_ini_item* item = &sec->items[i];
+                switch (item->type) {
+                    case SDL_INI_ITEM_ENTRY: {
+                        const char* val = item->value;
+                        if (INI__needs_quoting(val)) {
+                            char* esc = INI__escape(val);
+                            if (!esc) {
+                                if (closeio) {
+                                    SDL_CloseIO(dst);
+                                }
+                                return false; // SDL_OutOfMemory() already set
+                            }
+                            SDL_IOprintf(dst, "%s = \"%s\"%s", item->key, esc, eol);
+                            SDL_free(esc);
+                        }
+                        else {
+                            SDL_IOprintf(dst, "%s = %s%s", item->key, val, eol);
+                        }
+                        last_was_blank = false;
+                        break;
+                    }
+                    case SDL_INI_ITEM_COMMENT:
+                        SDL_IOprintf(dst, "%s%s", item->comment, eol);
+                        last_was_blank = false;
+                        break;
+                    case SDL_INI_ITEM_BLANK:
+                        SDL_IOprintf(dst, "%s", eol);
+                        last_was_blank = true;
+                        break;
+                }
+                wrote_any = true;
+            }
         }
     }
 

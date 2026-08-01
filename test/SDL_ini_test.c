@@ -944,6 +944,56 @@ static int SDLCALL test_clone(void* arg) {
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_global_after_named(void* arg) {
+    (void)arg;
+
+    // Issue #49 repro: a named section created before any global key must not
+    // absorb the global key on a save/load round trip.
+    SDL_ini* ini = INI_Create();
+    INI_SetString(ini, "Video", "width", "1920");
+    INI_SetString(ini, NULL, "app", "test");
+
+    char* str = INI_SaveString(ini);
+    TEST(str != NULL, "SaveString with global keys set after named section");
+    INI_Destroy(ini);
+
+    if (str) {
+        SDL_ini* loaded = INI_LoadString(str);
+        TEST(loaded != NULL, "reload global-after-named INI");
+        if (loaded) {
+            TEST_STR(INI_GetString(loaded, NULL, "app", "?"), "test", "global key stays global after reload");
+            TEST(INI_HasKey(loaded, "Video", "app") == false, "global key not absorbed by named section");
+            TEST_STR(INI_GetString(loaded, "Video", "width", "?"), "1920", "named section key survives reload");
+            INI_Destroy(loaded);
+        }
+        SDL_free(str);
+    }
+
+    return TEST_COMPLETED;
+}
+
+static int SDLCALL test_clone_global_after_named(void* arg) {
+    (void)arg;
+
+    // INI_Clone round-trips through SaveString/LoadString, so it must also
+    // keep global keys global when a named section was created first.
+    SDL_ini* ini = INI_Create();
+    INI_SetString(ini, "Video", "width", "1920");
+    INI_SetString(ini, NULL, "app", "test");
+
+    SDL_ini* clone = INI_Clone(ini);
+    TEST(clone != NULL, "clone with global keys set after named section");
+    if (clone) {
+        TEST_STR(INI_GetString(clone, NULL, "app", "?"), "test", "clone keeps global key global");
+        TEST(INI_HasKey(clone, "Video", "app") == false, "clone does not move global key into named section");
+        TEST_STR(INI_GetString(clone, "Video", "width", "?"), "1920", "clone keeps named section key");
+        INI_Destroy(clone);
+    }
+
+    INI_Destroy(ini);
+    return TEST_COMPLETED;
+}
+
 static int SDLCALL test_invalid_names(void* arg) {
     (void)arg;
     SDL_ini* ini = INI_Create();
@@ -1060,6 +1110,8 @@ static const SDLTest_TestCaseReference* iniTestCases[] = {
     CASE(test_save_string, "INI_SaveString round-trip"),
     CASE(test_loop_utilities, "Index-based loop utilities"),
     CASE(test_clone, "INI_Clone deep copy"),
+    CASE(test_global_after_named, "Global keys set after named section round-trip"),
+    CASE(test_clone_global_after_named, "Clone keeps global keys global"),
     CASE(test_invalid_names, "Reject unsafe key/section names"),
     NULL};
 
