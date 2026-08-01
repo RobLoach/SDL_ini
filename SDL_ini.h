@@ -1185,10 +1185,9 @@ bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio) {
     bool wrote_any = false;
     bool last_was_blank = false;
 
-    // Two passes: write the global section (empty name) first regardless of
-    // its position in the array, then the named sections in their original
-    // relative order. Global keys written after a [Section] header would be
-    // reassigned to that section on reload.
+    // Write the global section first, regardless of
+    // its position in the array. This is so that the
+    // keys don't end up in other sections.
     for (int pass = 0; pass < 2; ++pass) {
         for (int s = 0; s < ini->section_count; ++s) {
             const SDL_ini_section* sec = &ini->sections[s];

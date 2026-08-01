@@ -947,8 +947,6 @@ static int SDLCALL test_clone(void* arg) {
 static int SDLCALL test_global_after_named(void* arg) {
     (void)arg;
 
-    // Issue #49 repro: a named section created before any global key must not
-    // absorb the global key on a save/load round trip.
     SDL_ini* ini = INI_Create();
     INI_SetString(ini, "Video", "width", "1920");
     INI_SetString(ini, NULL, "app", "test");
@@ -975,8 +973,7 @@ static int SDLCALL test_global_after_named(void* arg) {
 static int SDLCALL test_clone_global_after_named(void* arg) {
     (void)arg;
 
-    // INI_Clone round-trips through SaveString/LoadString, so it must also
-    // keep global keys global when a named section was created first.
+    // When saving an INI, we need to have the globals appear first.
     SDL_ini* ini = INI_Create();
     INI_SetString(ini, "Video", "width", "1920");
     INI_SetString(ini, NULL, "app", "test");
