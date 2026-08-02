@@ -1173,6 +1173,31 @@ SDL_ini* INI_LoadString(const char* text) {
     return INI_Load_IO(SDL_IOFromConstMem(text, SDL_strlen(text)), true);
 }
 
+/**
+ * Format and write text to the stream, requiring every byte to land.
+ *
+ * \returns true on success, or false (with the SDL error set) on a short
+ *          or failed write.
+ *
+ * \internal
+ */
+static bool INI__printf(SDL_IOStream* dst, const char* fmt, ...) {
+    char* text = NULL;
+    va_list ap;
+    va_start(ap, fmt);
+    int len = SDL_vasprintf(&text, fmt, ap);
+    va_end(ap);
+    if (len < 0 || !text) {
+        SDL_free(text);
+        return SDL_SetError("INI__printf: failed to format output");
+    }
+    // A short write leaves the stream truncated; treat it as failure.
+    // SDL_WriteIO already sets the error in that case.
+    bool ok = (SDL_WriteIO(dst, text, (size_t)len) == (size_t)len);
+    SDL_free(text);
+    return ok;
+}
+
 bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio) {
     if (!ini || !dst) {
         if (closeio && dst) {
@@ -1206,9 +1231,19 @@ bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio) {
             if (!is_global) {
                 // Add a blank line separator before section headers when needed.
                 if (wrote_any && !last_was_blank) {
-                    SDL_IOprintf(dst, "%s", eol);
+                    if (!INI__printf(dst, "%s", eol)) {
+                        if (closeio) {
+                            SDL_CloseIO(dst);
+                        }
+                        return false;
+                    }
                 }
-                SDL_IOprintf(dst, "[%s]%s", sec->name, eol);
+                if (!INI__printf(dst, "[%s]%s", sec->name, eol)) {
+                    if (closeio) {
+                        SDL_CloseIO(dst);
+                    }
+                    return false;
+                }
                 last_was_blank = false;
                 wrote_any = true;
             }
@@ -1226,21 +1261,42 @@ bool INI_Save_IO(SDL_ini* ini, SDL_IOStream* dst, bool closeio) {
                                 }
                                 return false; // SDL_OutOfMemory() already set
                             }
-                            SDL_IOprintf(dst, "%s = \"%s\"%s", item->key, esc, eol);
+                            bool ok = INI__printf(dst, "%s = \"%s\"%s", item->key, esc, eol);
                             SDL_free(esc);
+                            if (!ok) {
+                                if (closeio) {
+                                    SDL_CloseIO(dst);
+                                }
+                                return false;
+                            }
                         }
                         else {
-                            SDL_IOprintf(dst, "%s = %s%s", item->key, val, eol);
+                            if (!INI__printf(dst, "%s = %s%s", item->key, val, eol)) {
+                                if (closeio) {
+                                    SDL_CloseIO(dst);
+                                }
+                                return false;
+                            }
                         }
                         last_was_blank = false;
                         break;
                     }
                     case SDL_INI_ITEM_COMMENT:
-                        SDL_IOprintf(dst, "%s%s", item->comment, eol);
+                        if (!INI__printf(dst, "%s%s", item->comment, eol)) {
+                            if (closeio) {
+                                SDL_CloseIO(dst);
+                            }
+                            return false;
+                        }
                         last_was_blank = false;
                         break;
                     case SDL_INI_ITEM_BLANK:
-                        SDL_IOprintf(dst, "%s", eol);
+                        if (!INI__printf(dst, "%s", eol)) {
+                            if (closeio) {
+                                SDL_CloseIO(dst);
+                            }
+                            return false;
+                        }
                         last_was_blank = true;
                         break;
                 }

@@ -807,6 +807,61 @@ static int SDLCALL test_dirty_flag(void* arg) {
     return TEST_COMPLETED;
 }
 
+/* Byte budget for a failing stream: writes succeed until the budget runs
+ * out, then fail, simulating a full disk. */
+typedef struct {
+    size_t remaining;
+} FailingStream;
+
+static size_t SDLCALL failing_write(void* userdata, const void* ptr, size_t size, SDL_IOStatus* status) {
+    FailingStream* fs = (FailingStream*)userdata;
+    (void)ptr;
+    size_t written = size <= fs->remaining ? size : fs->remaining;
+    fs->remaining -= written;
+    if (written < size) {
+        *status = SDL_IO_STATUS_ERROR;
+        SDL_SetError("simulated full stream");
+    }
+    return written;
+}
+
+static int SDLCALL test_save_io_write_failure(void* arg) {
+    (void)arg;
+    SDL_ini* ini = INI_Create();
+    INI_SetString(ini, "Video", "width", "1920");
+    INI_SetString(ini, "Video", "height", "1080");
+    TEST(INI_IsDirty(ini) == true, "ini is dirty before save");
+
+    SDL_IOStreamInterface iface;
+    SDL_INIT_INTERFACE(&iface);
+    iface.write = failing_write;
+
+    // A stream that rejects every write.
+    FailingStream fs;
+    fs.remaining = 0;
+    SDL_IOStream* io = SDL_OpenIO(&iface, &fs);
+    TEST(io != NULL, "open failing IOStream");
+    TEST(INI_Save_IO(ini, io, false) == false, "save to failing stream returns false");
+    TEST(INI_IsDirty(ini) == true, "dirty flag survives failed save");
+    SDL_CloseIO(io);
+
+    // A stream that fails partway through, which would truncate the file.
+    // Also exercises the closeio path on failure.
+    fs.remaining = 10;
+    io = SDL_OpenIO(&iface, &fs);
+    TEST(io != NULL, "open short-write IOStream");
+    TEST(INI_Save_IO(ini, io, true) == false, "save to short-write stream returns false");
+    TEST(INI_IsDirty(ini) == true, "dirty flag survives short write");
+
+    // A working stream still saves and clears the dirty flag.
+    SDL_IOStream* out = SDL_IOFromDynamicMem();
+    TEST(INI_Save_IO(ini, out, true) == true, "save to working stream succeeds");
+    TEST(INI_IsDirty(ini) == false, "dirty flag cleared after successful save");
+
+    INI_Destroy(ini);
+    return TEST_COMPLETED;
+}
+
 static int SDLCALL test_save_string(void* arg) {
     (void)arg;
 
@@ -1104,6 +1159,7 @@ static const SDLTest_TestCaseReference* iniTestCases[] = {
     CASE(test_crlf, "CRLF detection and round-trip"),
     CASE(test_merge, "Merge INI files"),
     CASE(test_dirty_flag, "Dirty flag tracking"),
+    CASE(test_save_io_write_failure, "Failed writes fail the save and keep the dirty flag"),
     CASE(test_save_string, "INI_SaveString round-trip"),
     CASE(test_loop_utilities, "Index-based loop utilities"),
     CASE(test_clone, "INI_Clone deep copy"),
