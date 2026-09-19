@@ -48,6 +48,36 @@ static void SDLCALL collect_key(void* userdata, const SDL_ini* ini, const char* 
     c->count++;
 }
 
+/* Records the section string handed to enumeration callbacks, and whether
+ * any callback ever received NULL for it. Shared by both the section and
+ * key enumeration callbacks to verify the "" global-section contract. */
+typedef struct {
+    int count;
+    bool saw_null;
+    char sections[8][64];
+} SectionProbe;
+
+static void probe_record(SectionProbe* p, const char* section) {
+    if (!section) {
+        p->saw_null = true;
+    } else if (p->count < 8) {
+        SDL_strlcpy(p->sections[p->count], section, sizeof(p->sections[0]));
+    }
+    p->count++;
+}
+
+static void SDLCALL probe_section(void* userdata, const SDL_ini* ini, const char* section) {
+    (void)ini;
+    probe_record((SectionProbe*)userdata, section);
+}
+
+static void SDLCALL probe_key(void* userdata, const SDL_ini* ini, const char* section, const char* key, const char* value) {
+    (void)ini;
+    (void)key;
+    (void)value;
+    probe_record((SectionProbe*)userdata, section);
+}
+
 static int SDLCALL test_create_destroy(void* arg) {
     (void)arg;
     SDL_ini* ini = INI_Create();
@@ -265,6 +295,56 @@ static int SDLCALL test_enumeration(void* arg) {
     got.count = 0;
     INI_EnumerateKeys(ini, "NoSuch", collect_key, &got);
     TEST(got.count == 0, "0 keys in non-existent section");
+
+    INI_Destroy(ini);
+    return TEST_COMPLETED;
+}
+
+static int SDLCALL test_callback_error_contracts(void* arg) {
+    (void)arg;
+    SDL_ini* ini = INI_Create();
+    SectionProbe probe;
+
+    INI_SetString(ini, NULL, "global_key", "gv");
+    INI_SetString(ini, "Alpha", "a1", "v1");
+
+    // INI_EnumerateSections reports the global section as "".
+    probe.count = 0;
+    probe.saw_null = false;
+    INI_EnumerateSections(ini, probe_section, &probe);
+    TEST(probe.count == 2, "2 sections enumerated");
+    TEST(probe.saw_null == false, "sections callback never receives NULL");
+    TEST_STR(probe.sections[0], "", "global section reported as \"\"");
+    TEST_STR(probe.sections[1], "Alpha", "named section reported as-is");
+
+    // INI_EnumerateKeys with a NULL section reports "" to the callback.
+    probe.count = 0;
+    probe.saw_null = false;
+    INI_EnumerateKeys(ini, NULL, probe_key, &probe);
+    TEST(probe.count == 1, "1 key enumerated in global section via NULL");
+    TEST(probe.saw_null == false, "keys callback never receives NULL section");
+    TEST_STR(probe.sections[0], "", "NULL section reported to keys callback as \"\"");
+
+    // INI_EnumerateKeys with "" also reports "".
+    probe.count = 0;
+    probe.saw_null = false;
+    INI_EnumerateKeys(ini, "", probe_key, &probe);
+    TEST(probe.count == 1, "1 key enumerated in global section via \"\"");
+    TEST_STR(probe.sections[0], "", "\"\" section reported to keys callback as \"\"");
+
+    // INI_RemoveKey with NULL arguments returns false and sets an error.
+    SDL_ClearError();
+    TEST(INI_RemoveKey(NULL, "Alpha", "a1") == false, "RemoveKey NULL ini returns false");
+    TEST(SDL_GetError()[0] != '\0', "RemoveKey NULL ini sets an error");
+
+    SDL_ClearError();
+    TEST(INI_RemoveKey(ini, "Alpha", NULL) == false, "RemoveKey NULL key returns false");
+    TEST(SDL_GetError()[0] != '\0', "RemoveKey NULL key sets an error");
+
+    // INI_RemoveSection with a NULL ini returns false and sets an error.
+    SDL_ClearError();
+    TEST(INI_RemoveSection(NULL, "Alpha") == false, "RemoveSection NULL ini returns false");
+    TEST(SDL_GetError()[0] != '\0', "RemoveSection NULL ini sets an error");
 
     INI_Destroy(ini);
     return TEST_COMPLETED;
@@ -1090,6 +1170,7 @@ static const SDLTest_TestCaseReference* iniTestCases[] = {
     CASE(test_set_get_boolean, "Set/get and parse booleans"),
     CASE(test_deletion, "Remove keys and sections"),
     CASE(test_enumeration, "Enumerate sections and keys"),
+    CASE(test_callback_error_contracts, "Callback \"\" contract and remove error reporting"),
     CASE(test_save_and_load, "Save to and load from a file"),
     CASE(test_parse_edge_cases, "Parse whitespace/comment edge cases"),
     CASE(test_io_stream, "Save/load through an IOStream"),

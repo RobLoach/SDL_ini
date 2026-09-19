@@ -194,6 +194,9 @@ void INI_Destroy(SDL_ini* ini);
  * \param key the key to look up.
  * \param default_value returned when the key is not found.
  * \returns the value string, or default_value if not found.
+ *
+ * Passing a NULL \c ini or \c key is not an error: default_value is
+ * returned by design, and no error is set.
  */
 const char* INI_GetString(const SDL_ini* ini, const char* section, const char* key, const char* default_value);
 
@@ -410,7 +413,8 @@ bool INI_RemoveSection(SDL_ini* ini, const char* section);
  * Callback invoked for each section name during enumeration.
  *
  * \param userdata user-provided pointer.
- * \param section the section name (empty string for the global section).
+ * \param section the section name. The global/root section is always
+ *                reported as the empty string "", never NULL.
  */
 typedef void(SDLCALL* INI_EnumerateSectionsCallback)(void* userdata, const SDL_ini* ini, const char* section);
 
@@ -418,6 +422,9 @@ typedef void(SDLCALL* INI_EnumerateSectionsCallback)(void* userdata, const SDL_i
  * Callback invoked for each key/value pair during enumeration.
  *
  * \param userdata user-provided pointer.
+ * \param section the section name. The global/root section is always
+ *                reported as the empty string "", never NULL, even when
+ *                the caller passed NULL to INI_EnumerateKeys().
  * \param key the key name.
  * \param value the associated value.
  */
@@ -1536,7 +1543,7 @@ bool INI_SetBoolean(SDL_ini* ini, const char* section, const char* key, bool val
 
 bool INI_RemoveKey(SDL_ini* ini, const char* section, const char* key) {
     if (!ini || !key) {
-        return false;
+        return SDL_SetError("INI_RemoveKey: invalid arguments");
     }
     SDL_ini_section* sec = INI__find_section(ini, section);
     if (!sec) {
@@ -1559,7 +1566,7 @@ bool INI_RemoveKey(SDL_ini* ini, const char* section, const char* key) {
 
 bool INI_RemoveSection(SDL_ini* ini, const char* section) {
     if (!ini) {
-        return false;
+        return SDL_SetError("INI_RemoveSection: invalid arguments");
     }
     const char* sec_name = INI__section_name(section);
     for (int i = 0; i < ini->section_count; ++i) {
@@ -1591,9 +1598,12 @@ void INI_EnumerateKeys(const SDL_ini* ini, const char* section, INI_EnumerateKey
     if (!sec) {
         return;
     }
+    // The callback always receives the canonical "" for the global section,
+    // matching INI_EnumerateSections(), even when the caller passed NULL.
+    const char* sec_name = INI__section_name(section);
     for (int i = 0; i < sec->item_count; ++i) {
         if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
-            callback(userdata, ini, section, sec->items[i].key, sec->items[i].value);
+            callback(userdata, ini, sec_name, sec->items[i].key, sec->items[i].value);
         }
     }
 }
