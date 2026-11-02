@@ -609,6 +609,8 @@ typedef struct SDL_ini_section {
     SDL_ini_item* items; /** The array of items that are held within this section. */
     int item_count; /** The number of items. */
     int item_capacity; /** The maximum capacity of the items array. */
+    SDL_PropertiesID index; /** Hash index mapping case-folded keys to their item index. */
+    bool linear; /** When true, the index is unusable and lookups scan the items instead. */
 } SDL_ini_section;
 
 /**
@@ -620,6 +622,8 @@ struct SDL_ini {
     SDL_ini_section* sections;
     int section_count;
     int section_capacity;
+    SDL_PropertiesID index; /** Hash index mapping case-folded section names to their index. */
+    bool linear; /** When true, the index is unusable and lookups scan the sections instead. */
     bool crlf;
     bool dirty;
 };
@@ -841,6 +845,105 @@ static bool INI__needs_quoting(const char* s) {
 }
 
 /**
+ * Property set on every index so that a destroyed index (e.g. by SDL_Quit())
+ * can be told apart from a missing name. Indexed names all start with '='.
+ *
+ * \internal
+ */
+#define INI__INDEX_SENTINEL "#"
+
+/**
+ * Create an SDL_Properties hash index. Sets linear to true on failure.
+ *
+ * \internal
+ */
+static SDL_PropertiesID INI__index_create(bool* linear) {
+    SDL_PropertiesID props = SDL_CreateProperties();
+    if (!props || !SDL_SetBooleanProperty(props, INI__INDEX_SENTINEL, true)) {
+        SDL_DestroyProperties(props);
+        *linear = true;
+        return 0;
+    }
+    return props;
+}
+
+/**
+ * Build the case-folded index name for a string: '=' followed by the
+ * ASCII-lowercased string. Uses buf when it fits, otherwise allocates.
+ *
+ * \returns NULL when the string is not plain ASCII (SDL_strcasecmp() folds
+ *          Unicode, so it can't be indexed this way), or on OOM.
+ *
+ * \internal
+ */
+static char* INI__index_name(const char* s, char* buf, size_t buflen) {
+    size_t len = SDL_strlen(s) + 2;
+    char* out = (len <= buflen) ? buf : (char*)SDL_malloc(len);
+    if (!out) {
+        return NULL;
+    }
+    out[0] = '=';
+    for (size_t i = 0; i < len - 1; ++i) {
+        unsigned char c = (unsigned char)s[i];
+        if (c >= 0x80) {
+            if (out != buf) {
+                SDL_free(out);
+            }
+            return NULL;
+        }
+        out[i + 1] = (char)SDL_tolower(c);
+    }
+    return out;
+}
+
+/**
+ * Look up a name in an index.
+ *
+ * \returns the stored index, -1 if not found, or -2 if a linear scan is needed.
+ *
+ * \internal
+ */
+static int INI__index_get(SDL_PropertiesID props, bool linear, const char* s) {
+    if (linear) {
+        return -2;
+    }
+    char buf[128];
+    char* name = INI__index_name(s, buf, sizeof(buf));
+    if (!name) {
+        return -2;
+    }
+    Sint64 idx = SDL_GetNumberProperty(props, name, -1);
+    if (name != buf) {
+        SDL_free(name);
+    }
+    if (idx < 0 && !SDL_HasProperty(props, INI__INDEX_SENTINEL)) {
+        return -2;
+    }
+    return (int)idx;
+}
+
+/**
+ * Store (idx >= 0) or remove (idx < 0) a name in an index. If that fails, the
+ * index is abandoned by setting linear to true.
+ *
+ * \internal
+ */
+static void INI__index_set(SDL_PropertiesID props, bool* linear, const char* s, int idx) {
+    if (*linear) {
+        return;
+    }
+    char buf[128];
+    char* name = INI__index_name(s, buf, sizeof(buf));
+    bool ok = name && (idx < 0 ? SDL_ClearProperty(props, name) : SDL_SetNumberProperty(props, name, idx));
+    if (name && name != buf) {
+        SDL_free(name);
+    }
+    if (!ok) {
+        *linear = true;
+    }
+}
+
+/**
  * Find a section by name (case-insensitive).
  *
  * \returns NULL if not found.
@@ -849,6 +952,13 @@ static bool INI__needs_quoting(const char* s) {
  */
 static SDL_ini_section* INI__find_section(const SDL_ini* ini, const char* name) {
     name = INI__section_name(name);
+    int idx = INI__index_get(ini->index, ini->linear, name);
+    if (idx >= 0 && idx < ini->section_count) {
+        return &ini->sections[idx];
+    }
+    if (idx == -1) {
+        return NULL;
+    }
     for (int i = 0; i < ini->section_count; ++i) {
         if (SDL_strcasecmp(ini->sections[i].name, name) == 0) {
             return &ini->sections[i];
@@ -863,6 +973,13 @@ static SDL_ini_section* INI__find_section(const SDL_ini* ini, const char* name) 
  * \internal
  */
 static SDL_ini_item* INI__find_entry(const SDL_ini_section* sec, const char* key) {
+    int idx = INI__index_get(sec->index, sec->linear, key);
+    if (idx >= 0 && idx < sec->item_count && sec->items[idx].type == SDL_INI_ITEM_ENTRY) {
+        return &sec->items[idx];
+    }
+    if (idx == -1) {
+        return NULL;
+    }
     for (int i = 0; i < sec->item_count; ++i) {
         if (sec->items[i].type == SDL_INI_ITEM_ENTRY &&
             SDL_strcasecmp(sec->items[i].key, key) == 0) {
@@ -941,8 +1058,36 @@ static SDL_ini_section* INI__get_or_create_section(SDL_ini* ini, const char* nam
         SDL_OutOfMemory();
         return NULL;
     }
+    sec->index = INI__index_create(&sec->linear);
+    INI__index_set(ini->index, &ini->linear, sec->name, ini->section_count);
     ini->section_count++;
     return sec;
+}
+
+/**
+ * Append a new ENTRY item to a section.
+ *
+ * \returns false on OOM.
+ *
+ * \internal
+ */
+static bool INI__add_entry(SDL_ini_section* sec, const char* key, const char* value) {
+    if (!INI__grow_items(sec)) {
+        return false;
+    }
+    SDL_ini_item* item = &sec->items[sec->item_count];
+    SDL_memset(item, 0, sizeof(*item));
+    item->type = SDL_INI_ITEM_ENTRY;
+    item->key = SDL_strdup(key);
+    item->value = SDL_strdup(value);
+    if (!item->key || !item->value) {
+        SDL_free(item->key);
+        SDL_free(item->value);
+        return SDL_OutOfMemory();
+    }
+    INI__index_set(sec->index, &sec->linear, item->key, sec->item_count);
+    sec->item_count++;
+    return true;
 }
 
 /**
@@ -963,6 +1108,7 @@ static void INI__free_section_contents(SDL_ini_section* sec) {
     }
     SDL_free(sec->items);
     SDL_free(sec->name);
+    SDL_DestroyProperties(sec->index);
 }
 
 int INI_GetVersion(void) {
@@ -973,7 +1119,9 @@ SDL_ini* INI_Create(void) {
     SDL_ini* ini = (SDL_ini*)SDL_calloc(1, sizeof(*ini));
     if (!ini) {
         SDL_OutOfMemory();
+        return NULL;
     }
+    ini->index = INI__index_create(&ini->linear);
     return ini;
 }
 
@@ -1133,26 +1281,11 @@ SDL_ini* INI_Load_IO(SDL_IOStream* src, bool closeio) {
                 continue;
             }
 
-            if (!INI__grow_items(sec)) {
+            if (!INI__add_entry(sec, key, value)) {
                 INI_Destroy(ini);
                 SDL_free(data);
                 return NULL;
             }
-
-            SDL_ini_item* item = &sec->items[sec->item_count];
-            SDL_memset(item, 0, sizeof(*item));
-            item->type = SDL_INI_ITEM_ENTRY;
-            item->key = SDL_strdup(key);
-            item->value = SDL_strdup(value);
-            if (!item->key || !item->value) {
-                SDL_free(item->key);
-                SDL_free(item->value);
-                SDL_OutOfMemory();
-                INI_Destroy(ini);
-                SDL_free(data);
-                return NULL;
-            }
-            sec->item_count++;
         }
         // Lines without '=' are silently ignored.
 
@@ -1323,6 +1456,7 @@ void INI_Destroy(SDL_ini* ini) {
         INI__free_section_contents(&ini->sections[i]);
     }
     SDL_free(ini->sections);
+    SDL_DestroyProperties(ini->index);
     SDL_free(ini);
 }
 
@@ -1501,20 +1635,9 @@ bool INI_SetString(SDL_ini* ini, const char* section, const char* key, const cha
     }
 
     // Append new entry.
-    if (!INI__grow_items(sec)) {
+    if (!INI__add_entry(sec, key, value)) {
         return false;
     }
-    item = &sec->items[sec->item_count];
-    SDL_memset(item, 0, sizeof(*item));
-    item->type = SDL_INI_ITEM_ENTRY;
-    item->key = SDL_strdup(key);
-    item->value = SDL_strdup(value);
-    if (!item->key || !item->value) {
-        SDL_free(item->key);
-        SDL_free(item->value);
-        return SDL_OutOfMemory();
-    }
-    sec->item_count++;
     ini->dirty = true;
     return true;
 }
@@ -1549,36 +1672,45 @@ bool INI_RemoveKey(SDL_ini* ini, const char* section, const char* key) {
     if (!sec) {
         return false;
     }
-    for (int i = 0; i < sec->item_count; ++i) {
-        if (sec->items[i].type == SDL_INI_ITEM_ENTRY &&
-            SDL_strcasecmp(sec->items[i].key, key) == 0) {
-            SDL_free(sec->items[i].key);
-            SDL_free(sec->items[i].value);
-            // Shift remaining items down to preserve order.
-            SDL_memmove(&sec->items[i], &sec->items[i + 1], (size_t)(sec->item_count - 1 - i) * sizeof(sec->items[0]));
-            sec->item_count--;
-            ini->dirty = true;
-            return true;
+    SDL_ini_item* item = INI__find_entry(sec, key);
+    if (!item) {
+        return false;
+    }
+    int i = (int)(item - sec->items);
+    INI__index_set(sec->index, &sec->linear, item->key, -1);
+    SDL_free(item->key);
+    SDL_free(item->value);
+    // Shift remaining items down to preserve order, then fix their indices.
+    SDL_memmove(&sec->items[i], &sec->items[i + 1], (size_t)(sec->item_count - 1 - i) * sizeof(sec->items[0]));
+    sec->item_count--;
+    for (; i < sec->item_count; ++i) {
+        if (sec->items[i].type == SDL_INI_ITEM_ENTRY) {
+            INI__index_set(sec->index, &sec->linear, sec->items[i].key, i);
         }
     }
-    return false;
+    ini->dirty = true;
+    return true;
 }
 
 bool INI_RemoveSection(SDL_ini* ini, const char* section) {
     if (!ini) {
         return SDL_SetError("INI_RemoveSection: invalid arguments");
     }
-    const char* sec_name = INI__section_name(section);
-    for (int i = 0; i < ini->section_count; ++i) {
-        if (SDL_strcasecmp(ini->sections[i].name, sec_name) == 0) {
-            INI__free_section_contents(&ini->sections[i]);
-            SDL_memmove(&ini->sections[i], &ini->sections[i + 1], (size_t)(ini->section_count - 1 - i) * sizeof(ini->sections[0]));
-            ini->section_count--;
-            ini->dirty = true;
-            return true;
-        }
+    SDL_ini_section* sec = INI__find_section(ini, section);
+    if (!sec) {
+        return false;
     }
-    return false;
+    int i = (int)(sec - ini->sections);
+    INI__index_set(ini->index, &ini->linear, sec->name, -1);
+    INI__free_section_contents(sec);
+    // Shift remaining sections down to preserve order, then fix their indices.
+    SDL_memmove(&ini->sections[i], &ini->sections[i + 1], (size_t)(ini->section_count - 1 - i) * sizeof(ini->sections[0]));
+    ini->section_count--;
+    for (; i < ini->section_count; ++i) {
+        INI__index_set(ini->index, &ini->linear, ini->sections[i].name, i);
+    }
+    ini->dirty = true;
+    return true;
 }
 
 void INI_EnumerateSections(const SDL_ini* ini, INI_EnumerateSectionsCallback callback, void* userdata) {

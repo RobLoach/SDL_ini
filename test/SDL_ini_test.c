@@ -1155,6 +1155,84 @@ static int SDLCALL test_invalid_names(void* arg) {
     return TEST_COMPLETED;
 }
 
+static int SDLCALL test_hashed_lookup(void* arg) {
+    (void)arg;
+    SDL_ini* ini = INI_Create();
+    char section[32];
+    char key[32];
+    char value[32];
+
+    // Fill several sections and keys, then check case-insensitive lookups.
+    for (int s = 0; s < 8; ++s) {
+        SDL_snprintf(section, sizeof(section), "Section%d", s);
+        for (int k = 0; k < 8; ++k) {
+            SDL_snprintf(key, sizeof(key), "Key%d", k);
+            SDL_snprintf(value, sizeof(value), "%d", s * 10 + k);
+            INI_SetString(ini, section, key, value);
+        }
+    }
+    TEST_STR(INI_GetString(ini, "SECTION3", "key5", "?"), "35", "case-insensitive lookup in many sections");
+    TEST_STR(INI_GetString(ini, "section7", "KEY7", "?"), "77", "case-insensitive lookup of last key");
+
+    // Remove a key: later keys shift down but must still be found.
+    TEST(INI_RemoveKey(ini, "section3", "KEY2") == true, "remove key with different case");
+    TEST(INI_HasKey(ini, "Section3", "Key2") == false, "removed key is gone");
+    TEST_STR(INI_GetString(ini, "Section3", "kEy3", "?"), "33", "key after removed key still found");
+    TEST_STR(INI_GetString(ini, "Section3", "key7", "?"), "37", "last key after removal still found");
+    TEST_STR(INI_GetString(ini, "Section3", "key1", "?"), "31", "key before removed key still found");
+    TEST(INI_GetKeyCount(ini, "Section3") == 7, "key count after removal");
+    TEST_STR(INI_GetKey(ini, "Section3", 2), "Key3", "key order preserved after removal");
+
+    // Re-add the removed key: it is appended, not duplicated.
+    INI_SetString(ini, "Section3", "KEY2", "new");
+    TEST_STR(INI_GetString(ini, "Section3", "key2", "?"), "new", "re-added key found");
+    TEST_STR(INI_GetKey(ini, "Section3", 7), "KEY2", "re-added key appended at the end");
+    INI_SetString(ini, "Section3", "key2", "newer");
+    TEST(INI_GetKeyCount(ini, "Section3") == 8, "re-set key does not duplicate");
+
+    // Remove a section: later sections shift down but must still be found.
+    TEST(INI_RemoveSection(ini, "SECTION2") == true, "remove section with different case");
+    TEST(INI_HasSection(ini, "Section2") == false, "removed section is gone");
+    TEST_STR(INI_GetString(ini, "section3", "key2", "?"), "newer", "section after removed section still found");
+    TEST_STR(INI_GetString(ini, "Section7", "Key0", "?"), "70", "last section after removal still found");
+    TEST_STR(INI_GetString(ini, "Section1", "Key1", "?"), "11", "section before removed section still found");
+    TEST_STR(INI_GetSection(ini, 2), "Section3", "section order preserved after removal");
+    INI_SetString(ini, "section2", "key", "back");
+    TEST_STR(INI_GetSection(ini, INI_GetSectionCount(ini) - 1), "section2", "re-added section appended at the end");
+    TEST_STR(INI_GetString(ini, "SECTION2", "KEY", "?"), "back", "re-added section found");
+    TEST(INI_HasKey(ini, "Section2", "Key0") == false, "re-added section does not keep old keys");
+
+    // Global section, long names, and non-ASCII names.
+    INI_SetString(ini, NULL, "Global", "g");
+    TEST_STR(INI_GetString(ini, "", "GLOBAL", "?"), "g", "global section lookup");
+    char long_key[300];
+    SDL_memset(long_key, 'A', sizeof(long_key) - 1);
+    long_key[sizeof(long_key) - 1] = '\0';
+    INI_SetString(ini, "Long", long_key, "long");
+    long_key[0] = 'a';
+    TEST_STR(INI_GetString(ini, "long", long_key, "?"), "long", "long key lookup");
+    INI_SetString(ini, "Caf\xc3\xa9", "Na\xc3\xafve", "utf8");
+    TEST_STR(INI_GetString(ini, "caf\xc3\xa9", "na\xc3\xafve", "?"), "utf8", "non-ASCII lookup");
+    TEST_STR(INI_GetString(ini, "Section4", "key4", "?"), "44", "ASCII lookup after non-ASCII section added");
+
+    INI_Destroy(ini);
+
+    // Loaded and cloned data is indexed too, and duplicate keys of differing case collapse.
+    ini = INI_LoadString("[Alpha]\nOne = 1\nTwo = 2\n[Beta]\nthree = 3\n[ALPHA]\nONE = uno\n");
+    TEST(ini != NULL, "load string");
+    TEST(INI_GetSectionCount(ini) == 2, "differently cased sections merge on load");
+    TEST(INI_GetKeyCount(ini, "alpha") == 2, "differently cased keys merge on load");
+    TEST_STR(INI_GetString(ini, "alpha", "one", "?"), "uno", "loaded lookup is case-insensitive");
+    SDL_ini* clone = INI_Clone(ini);
+    TEST(INI_RemoveSection(clone, "alpha") == true, "remove section from clone");
+    TEST_STR(INI_GetString(clone, "BETA", "THREE", "?"), "3", "clone lookup after removal");
+    TEST_STR(INI_GetString(ini, "ALPHA", "TWO", "?"), "2", "original unaffected by clone removal");
+    INI_Destroy(clone);
+    INI_Destroy(ini);
+
+    return TEST_COMPLETED;
+}
+
 #define CASE(fn, desc)                   \
     &(const SDLTest_TestCaseReference) { \
         fn, #fn, desc, TEST_ENABLED      \
@@ -1191,6 +1269,7 @@ static const SDLTest_TestCaseReference* iniTestCases[] = {
     CASE(test_global_after_named, "Global keys set after named section round-trip"),
     CASE(test_clone_global_after_named, "Clone keeps global keys global"),
     CASE(test_invalid_names, "Reject unsafe key/section names"),
+    CASE(test_hashed_lookup, "Hashed case-insensitive lookup across mutations"),
     NULL};
 
 static SDLTest_TestSuiteReference iniSuite = {
