@@ -40,11 +40,11 @@ int main(int argc, char *argv[])
 
     // Creating and Saving
     SDL_ini *ini = INI_Create();
-    INI_SetString(ini,  NULL,    "title",        "My Game");
+    INI_SetString(ini,  NULL,    "title",      "My Game");
     INI_SetInt(ini,     "Video", "width",      1920);
     INI_SetInt(ini,     "Video", "height",     1080);
     INI_SetBoolean(ini, "Video", "fullscreen", true);
-    INI_SetFloat(ini,   "Audio", "volume",     0.85f);
+    INI_SetFloat(ini,   "Audio", "volume",     0.75f);
     INI_Save(ini, "settings.ini");
     INI_Destroy(ini);
 
@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     SDL_ini *cfg = INI_Load("settings.ini");
     int w = (int)INI_GetInt(cfg, "Video", "width", 1280);
     bool fs = INI_GetBoolean(cfg, "Video", "fullscreen", false);
+    SDL_Log("width = %d, fullscreen = %s", w, fs ? "true" : "false");
     INI_Destroy(cfg);
 
     SDL_Quit();
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 Produces `settings.ini`:
 
 ```ini
-app = My Game
+title = My Game
 
 [Video]
 width = 1920
@@ -70,7 +71,7 @@ height = 1080
 fullscreen = true
 
 [Audio]
-volume = 0.85
+volume = 0.75
 ```
 
 ## API Reference
@@ -90,6 +91,7 @@ SDL_ini *INI_LoadMultiple(const char **files);
 bool INI_Save_IO(SDL_ini *ini, SDL_IOStream *dst, bool closeio);
 bool INI_Save(SDL_ini *ini, const char *file);
 char *INI_SaveString(SDL_ini *ini);
+SDL_ini *INI_Clone(const SDL_ini *ini);
 void INI_Destroy(SDL_ini *ini);
 
 // Get
@@ -162,8 +164,15 @@ vsync = off
 - **Sections** are delimited by `[name]`
 - **Keys** are separated from values by `=`
 - **Comments** begin with `;` or `#`
-- **Quoted values** — surrounding `"double quotes"` are stripped on load and added on save when the value contains leading/trailing whitespace or is empty
+- **Quoted values** — surrounding `"double quotes"` are stripped on load and added on save when the value contains leading/trailing whitespace, is empty, or contains a character that needs escaping
+- **Escape sequences** — inside quoted values, `\n`, `\r`, `\t`, `\\` and `\"` are decoded on load (unknown escapes keep the character literally), and the same sequences are written on save
 - **Lookups** are case-insensitive for both section names and keys
+
+### Format Notes / Limitations
+
+- Lines without an `=` (that aren't a section or comment) are silently dropped
+- Inline comments are not supported: `key = value ; note` stores `value ; note` as the value
+- `INI_Merge()` copies only key/value entries; comments and blank lines from the source are dropped
 
 ## Building
 
@@ -178,7 +187,7 @@ ctest --test-dir build
 ### Manual
 
 ```bash
-cc test/SDL_ini_test.c -o SDL_ini_test $(pkg-config --cflags --libs sdl3)
+cc test/SDL_ini_test.c -I. -o SDL_ini_test $(pkg-config --cflags --libs sdl3) -lSDL3_test
 ./SDL_ini_test
 ```
 

@@ -239,8 +239,9 @@ double INI_GetDouble(const SDL_ini* ini, const char* section, const char* key, d
 /**
  * Get a boolean value from the INI.
  *
- * Recognises "1", "true", "yes", "on" as true and "0", "false", "no", "off"
- * as false (case-insensitive).
+ * Recognises "1", "true", "t", "yes", "y", "on", "enabled", "enable" and
+ * "active" as true, and "0", "false", "f", "no", "n", "off", "disabled",
+ * "disable", "inactive" and "none" as false (case-insensitive).
  *
  * \param ini the SDL_ini to query.
  * \param section section name (NULL or "" for the global section).
